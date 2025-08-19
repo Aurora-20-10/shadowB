@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HomeFit.web — Luyện tập tại nhà (Expanded)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="light dark" />
+  
+
+
+
+
+
+<style id="augment-ui">
+/* One-liner utilities */
+.no-scrollbar::-webkit-scrollbar{display:none}
+.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+
+
+@media (min-width: 768px){ .no-scrollbar::-webkit-scrollbar{display:initial} .no-scrollbar{-ms-overflow-style:auto;scrollbar-width:auto} }
+/* Toast */
+.toast-wrap{position:fixed;right:1rem;bottom:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+.toast{border-radius:.75rem;padding:.5rem .75rem;box-shadow:0 10px 20px rgba(0,0,0,.08);font-size:.9rem}
+.toast.ok{background:#059669;color:#fff}
+.toast.info{background:#2563eb;color:#fff}
+.toast.warn{background:#d97706;color:#fff}
+.toast.err{background:#dc2626;color:#fff}
+
+/* Video Manager button & modal */
+#video-fab{position:fixed;left:1rem;bottom:1rem;z-index:9998}
+#video-fab button{border-radius:9999px;padding:.6rem 1rem;box-shadow:0 10px 20px rgba(0,0,0,.12)}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(120%) blur(2px);z-index:9998}
+.modal-card{max-width:960px;margin:5vh auto;border-radius:1rem;padding:1rem}
+@media (prefers-color-scheme: dark){
+  .modal-card{background:#0f172a;color:#e2e8f0}
+}
+.input{width:100%;border:1px solid rgba(148,163,184,.4);border-radius:.75rem;padding:.5rem .75rem}
+.btn{border-radius:.75rem;border:1px solid rgba(148,163,184,.5);padding:.4rem .8rem}
+.btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+
+/* Quick FAB */
+#quick-fab{position:fixed;right:1rem;bottom:1rem;z-index:9997}
+#quick-fab button{border-radius:9999px;padding:.75rem 1rem;box-shadow:0 10px 20px rgba(0,0,0,.14)}
+@media (max-width: 768px){ #quick-fab{display:block} }
+</style>
+
+
+<style id="clean-ui-patch">
+/* Bottom Nav (mobile) */
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-top:1px solid rgba(148,163,184,.35);z-index:45}
+@media (prefers-color-scheme: dark){
+  .bottom-nav{background:rgba(2,6,23,.7);border-color:rgba(148,163,184,.35)}
+}
+.bottom-nav .bar{display:flex;align-items:center;justify-content:space-around;gap:.25rem;padding:.4rem .5rem}
+.bottom-nav .tab{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.5rem 0;border-radius:12px;font-size:.85rem}
+.bottom-nav .tab[aria-current="page"]{background:rgba(37,99,235,.1);color:#2563eb}
+@media (min-width: 768px){ .bottom-nav{display:none} }
+
+/* --- HomeFit Clean UI Patch v1 (non-breaking, CSS-only) --- */
+
+/* Base typography */
+:root{--hf-radius:14px;--hf-shadow:0 8px 24px rgba(2,6,23,.06);--hf-shadow-dark:0 10px 30px rgba(0,0,0,.35);}
+html{scroll-behavior:smooth}
+body{font-size:15px;line-height:1.65}
+
+/* Cards & sections (match Tailwind patterns in current markup) */
+.section, section[class*="px-4"][class*="py-8"]{display:block;gap:1rem}
+section .rounded-xl{border-radius:var(--hf-radius)}
+section .rounded-xl.border{background:rgba(255,255,255,.9);box-shadow:var(--hf-shadow)}
+@media (prefers-color-scheme: dark){
+  section .rounded-xl.border{background:rgba(2,6,23,.65);box-shadow:var(--hf-shadow-dark)}
+}
+
+/* Headings */
+section h1, section .text-2xl{letter-spacing:.1px}
+section .text-lg.font-semibold{margin-bottom:.25rem}
+
+/* Spacing tighten */
+section .mt-6{margin-top:1.25rem}
+section .mt-5{margin-top:1rem}
+section .mt-4{margin-top:0.9rem}
+section .mt-3{margin-top:0.75rem}
+section .mt-2{margin-top:0.6rem}
+
+/* Buttons */
+button, .btn{border-radius:calc(var(--hf-radius) - 4px)}
+button[class*="px-4"][class*="py-2"], .btn{padding:.5rem .9rem}
+.btn, .px-3.py-2{font-weight:600}
+.btn.primary, .bg-blue-600{box-shadow:0 6px 14px rgba(37,99,235,.2)}
+
+/* Inputs */
+input[type="text"], input[type="number"], select, textarea, .input{
+  border-radius:calc(var(--hf-radius) - 6px);
+  border:1px solid rgba(148,163,184,.45);
+  padding:.55rem .75rem;
+}
+input:focus, select:focus, textarea:focus{
+  outline: none;
+  box-shadow:0 0 0 3px rgba(37,99,235,.15);
+  border-color:#2563eb;
+}
+
+/* Header nav: more compact & readable */
+header.sticky{z-index:40}
+header nav button{font-weight:600}
+header nav button[aria-current="page"]{filter:saturate(115%)}
+
+/* Tables/grids (3-col spec lists) */
+.grid[class*="md:grid-cols-3"]{
+  align-items:center;
+}
+.grid[class*="md:grid-cols-3"] > .font-semibold{color:rgb(15,23,42,.85)}
+@media (prefers-color-scheme: dark){
+  .grid[class*="md:grid-cols-3"] > .font-semibold{color:rgb(226,232,240,.9)}
+}
+
+/* Video blocks */
+.aspect-video{border:1px solid rgba(148,163,184,.35)}
+.aspect-video img{object-position:center}
+
+/* Calendar & list tiles */
+.border.border-slate-200, .dark\:border-slate-700{
+  border-color:rgba(148,163,184,.35)!important;
+}
+
+/* Fix: selection/group elements overlapping Talos chat (z-index) */
+#talos, [data-talos]{z-index:10;position:relative}
+#group-picker, [data-group-picker]{z-index:20}
+#quick-fab{z-index:30}
+#video-fab{z-index:35}
+.toast-wrap{z-index:50}
+
+/* Readability for long lists */
+ul.list-disc{margin-left:1rem}
+ul.list-disc li{margin:.2rem 0}
+
+/* Make scrollbars subtle on desktop */
+@media (min-width: 768px){
+  ::-webkit-scrollbar{height:10px;width:10px}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(148,163,184,.6),rgba(100,116,139,.6));border-radius:9999px}
+  ::-webkit-scrollbar-track{background:transparent}
+}
+</style>
+
+
+<!-- PRO UPGRADES v1: Command Palette + Hotkeys + TTS/Timer + ICS styles -->
+<style id="pro-upgrades-v1-css">
+/* Command Palette */
+.cmdk-overlay{position:fixed;inset:0;background:rgba(2,6,23,.55);backdrop-filter:blur(6px);z-index:85;display:none}
+.cmdk-box{position:fixed;left:50%;top:12vh;transform:translateX(-50%);width:min(720px,92vw);background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;z-index:86;display:none}
+@media (prefers-color-scheme: dark){
+  .cmdk-box{background:#0b1220;border-color:rgba(148,163,184,.35);}
+}
+.cmdk-search{width:100%;box-sizing:border-box;padding:14px 16px;border:0;border-bottom:1px solid rgba(0,0,0,.08);outline:none;font-size:16px;border-radius:16px 16px 0 0}
+@media (prefers-color-scheme: dark){
+  .cmdk-search{background:#0b1220;color:#e2e8f0;border-bottom-color:rgba(148,163,184,.25)}
+}
+.cmdk-list{max-height:56vh;overflow:auto;padding:6px}
+.cmdk-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer}
+.cmdk-item:hover,.cmdk-item.active{background:rgba(0,0,0,.06)}
+@media (prefers-color-scheme: dark){
+  .cmdk-item:hover,.cmdk-item.active{background:rgba(148,163,184,.12)}
+}
+.cmdk-item .k{opacity:.6;font-size:12px}
+
+/* Quick Timer / Workout audio FAB */
+#timer-fab{position:fixed;right:16px;bottom:132px;z-index:56}
+#timer-overlay{position:fixed;inset:0;background:rgba(2,6,23,.86);z-index:86;display:none}
+.timer-card{position:fixed;left:50%;top:14vh;transform:translateX(-50%);width:min(560px,92vw);background:rgba(255,255,255,.06);
+  border:1px solid rgba(148,163,184,.3);border-radius:18px;padding:14px}
+.timer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#fff}
+.timer-disp{font-size:56px;line-height:1.1;color:#fff;text-align:center;margin:10px 0 14px}
+.timer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.timer-grid input{width:100%;padding:10px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(255,255,255,.08);color:#fff}
+.timer-actions{display:flex;gap:8px;justify-content:center}
+.timer-actions .btn{min-width:100px}
+
+/* Plan export bar and small action buttons */
+.plan-export-bar{display:flex;flex-wrap:wrap;gap:8px;margin:.5rem 0}
+.plan-action{font-size:12px;padding:.25rem .5rem;border-radius:10px;border:1px solid rgba(0,0,0,.15)}
+@media (prefers-color-scheme: dark){
+  .plan-action{border-color:rgba(148,163,184,.35);color:#e2e8f0}
+}
+</style>
+
+
+<style id="pro-upgrades-v1-css-tweak">
+  .cmdk-item .k:empty{ display:none; }
+</style>
+
+</head>
+<body class="min-h-screen bg-white dark:bg-slate-900">
+  <div id="root"></div>
+
+  <!-- React 18 UMD + Babel for JSX -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+  const { useState, useEffect, useMemo } = React;
+
+  const LS = {
+    TALOS_CFG: "hf_talos_cfg_v1",
+    TALOS_MEM: "hf_talos_mem_v1",
+    TALOS_SYS: "hf_talos_sys_v1",
+    PROFILE: "hf_profile_v1",
+    PLAN_ID: "hf_plan_id_v1",
+    PLAN_DATA: "hf_plan_data_v1",
+    LOGS: "hf_logs_v2",
+    SETTINGS: "hf_settings_v1",
+    REMINDER: "hf_reminder_v1",
+  };
+  const load = (k, d=null) => { try { const v = localStorage.getItem(k); return v? JSON.parse(v): d; } catch { return d; } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+  // ====== Expanded Library (40+ drills: cardio, upper, lower, posterior, core, mobility/warmup/cooldown) ======
+  const EXERCISES = [
+    // --- Alignment / Posture (new) ---
+    { id:"neck_rot", name:"Xoay cổ chậm", type:"mobility", level:"All", dur:60, cals:2, muscles:["Cổ gáy"], vid:"https://www.youtube-nocookie.com/embed/PruXF-NE2zI", tips:["Chậm, hết biên độ thoải mái","Vai thả lỏng","Không nảy cổ"], goal:"Giãn cơ cổ gáy, reset đầu thẳng trục."},
+    { id:"shoulder_ccw", name:"Xoay vai ngược chiều", type:"mobility", level:"All", dur:60, cals:2, muscles:["Vai"], vid:"https://www.youtube-nocookie.com/embed/jDbfuzfdVHM", tips:["Vòng rộng, đều nhịp","Không nhún cổ"], goal:"Giải phóng căng cơ vai, tránh lệch vai."},
+    { id:"hip_circles", name:"Xoay hông chậm", type:"mobility", level:"All", dur:60, cals:3, muscles:["Hông","Lưng dưới"], vid:"https://www.youtube-nocookie.com/embed/altA7815AGs", tips:["Giữ ngực mở","Chậm, cảm nhận khớp hông"], goal:"Kích hoạt khớp hông, mở trục lưng – chậu."},
+    { id:"wall_angels", name:"Wall Angels (vẽ thiên thần trên tường)", type:"mobility", level:"All", dur:120, cals:3, muscles:["Lưng trên","Vai sau"], vid:"https://www.youtube-nocookie.com/embed/ywYi4rBhRBQ", tips:["Lưng, đầu, khuỷu cổ tay áp tường","Trượt tay chậm, không ưỡn lưng"], goal:"Mở lưng trên, chống gù lưng."},
+    { id:"doorway_chest", name:"Doorway Chest Stretch (kéo giãn ngực trước cửa)", type:"mobility", level:"All", dur:120, cals:3, muscles:["Ngực","Vai trước"], vid:"https://www.youtube-nocookie.com/embed/qv6el4OhHjA", tips:["Khuỷu tựa khung cửa 90°","Bước nhẹ ra trước, ngực mở"], goal:"Mở ngực, kéo vai lùi lại."},
+    { id:"cat_cow_2m", name:"Cat-Cow 2 phút", type:"mobility", level:"All", dur:120, cals:3, muscles:["Cột sống"], vid:"https://www.youtube-nocookie.com/embed/y39PrKY_4JM", tips:["Hít mở ngực, thở cuộn lưng","Nhịp đều — không nín thở"], goal:"Linh hoạt cột sống, kéo giãn cơ lưng."},
+    { id:"plank_knees", name:"Plank tĩnh (gối chạm đất – beginner)", type:"core", level:"Beginner", dur:30, cals:4, muscles:["Core sâu"], vid:"https://www.youtube-nocookie.com/embed/ic40NXcsQ2M", tips:["Gối tựa sàn, hông ngang","Khuỷu dưới vai, không võng lưng"], goal:"Kích hoạt cơ bụng sâu (deep core)."},
+    { id:"deadbug_1m", name:"Dead Bug 1 phút", type:"core", level:"Beginner", dur:60, cals:5, muscles:["Core sâu"], vid:"https://www.youtube-nocookie.com/embed/g_BYB0R-4Ws", tips:["Lưng áp sàn","Chậm, kiểm soát đối bên"], goal:"Tập kiểm soát thân mình khi chuyển động."},
+    { id:"wall_sit_1m", name:"Wall Sit 1 phút", type:"lower", level:"All", dur:60, cals:5, muscles:["Đùi trước","Core"], vid:"https://www.youtube-nocookie.com/embed/JaZNYM3zAP0", tips:["Đùi song song sàn","Lưng áp tường, thở mũi"], goal:"Kích hoạt đùi – mông – core đồng bộ giữ trục."},
+    
+    // Cardio
+    { id:"jumping_jacks", name:"Jumping Jacks", type:"cardio", level:"All", dur:30, cals:8, muscles:["Cardio","Toàn thân"], vid:"https://www.youtube-nocookie.com/embed/iSSAk4XCsRA", tips:["Mở rộng tay chân đồng thời","Giữ nhịp đều","Không nhảy quá cao"]},
+    { id:"high_knees", name:"High Knees", type:"cardio", level:"All", dur:30, cals:9, muscles:["Cardio","Core"], vid:"https://www.youtube-nocookie.com/embed/OAJ_J3EZkdY", tips:["Lái gối lên cao ngang hông","Nhịp tay theo chân"]},
+    { id:"butt_kicks", name:"Butt Kicks", type:"cardio", level:"All", dur:30, cals:8, muscles:["Cardio","Gân kheo"], vid:"https://www.youtube.com/watch?v=kRR1i9btd_w", tips:["Gót chạm mông","Thân trên thẳng"]},
+    { id:"skaters", name:"Skaters (Trượt băng)", type:"cardio", level:"Intermediate", dur:30, cals:9, muscles:["Mông","Đùi ngoài","Cardio"], vid:"https://www.youtube.com/watch?v=9_jLW6VkU8A", tips:["Bước chéo hông thấp","Điều khiển tay đối xứng"]},
+    { id:"shadow_box", name:"Shadow Boxing", type:"cardio", level:"All", dur:30, cals:8, muscles:["Vai","Core","Cardio"], vid:"https://www.youtube.com/watch?v=i12A6G_LiJo", tips:["Gồng core nhẹ","Xoay hông khi đấm"]},
+    { id:"rope_sim", name:"Nhảy dây giả lập", type:"cardio", level:"All", dur:30, cals:9, muscles:["Cardio","Bắp chân"], vid:"https://www.youtube.com/watch?v=Fdw--dqQAzA", tips:["Nhảy thấp, mũi chân tiếp đất","Nhịp đều"]},
+    { id:"burpee", name:"Burpee nhẹ", type:"full", level:"Intermediate", dur:25, cals:10, muscles:["Toàn thân","Cardio"], vid:"https://www.youtube-nocookie.com/embed/dZgVxmf6jkA", tips:["Chống tay vững","Đá chân có kiểm soát","Giữ nhịp"]},
+
+    // Upper
+    { id:"pushups", name:"Chống đẩy", type:"upper", level:"Beginner", dur:30, cals:7, muscles:["Ngực","Tay sau","Vai"], vid:"https://www.youtube-nocookie.com/embed/IODxDxX7oi4", tips:["Lưng thẳng","Ngực gần chạm sàn","Siết core"]},
+    { id:"knee_pushups", name:"Chống đẩy gối", type:"upper", level:"Beginner", dur:30, cals:6, muscles:["Ngực","Vai"], vid:"https://www.youtube-nocookie.com/embed/J0DnG1_S92I", tips:["Gối tựa sàn","Đường thẳng gối‑vai‑đầu"]},
+    { id:"incline_pushups", name:"Chống đẩy dốc", type:"upper", level:"Beginner", dur:30, cals:6, muscles:["Ngực","Vai"], vid:"https://www.youtube.com/watch?v=Gvm5Q29UHbk", tips:["Tay tựa ghế","Cổ tay dưới vai","Xuống chậm, lên dứt khoát"]},
+    { id:"tricep_dips", name:"Dip ghế (tay sau)", type:"upper", level:"Intermediate", dur:30, cals:7, muscles:["Tay sau","Vai sau"], vid:"https://www.youtube-nocookie.com/embed/6kALZikXxLc", tips:["Khuỷu gập sau","Vai không nhún"]},
+    { id:"pike_pushups", name:"Chống đẩy Pike", type:"upper", level:"Intermediate", dur:25, cals:8, muscles:["Vai","Lưng trên"], vid:"https://www.youtube.com/watch?v=Ajna6AxQdtw", tips:["Hông cao","Đầu chạm sàn nhẹ"]},
+    { id:"shoulder_taps", name:"Plank Shoulder Taps", type:"upper", level:"All", dur:30, cals:7, muscles:["Vai","Core"], vid:"https://www.youtube.com/watch?v=gKA5LBy7WAI", tips:["Chống tay chắc","Giảm lắc hông"]},
+
+    // Lower
+    { id:"squats", name:"Squat", type:"lower", level:"Beginner", dur:30, cals:7, muscles:["Đùi trước","Mông","Core"], vid:"https://www.youtube-nocookie.com/embed/aclHkVaku9U", tips:["Gối không vượt mũi chân","Đẩy hông ra sau","Ngực mở"]},
+    { id:"sumo_squat", name:"Sumo Squat", type:"lower", level:"Beginner", dur:30, cals:7, muscles:["Đùi trong","Mông"], vid:"https://www.youtube.com/watch?v=kjlfpqXnyL8", tips:["Chân rộng, mũi chân xoay nhẹ","Đẩy qua gót"]},
+    { id:"split_squat", name:"Split Squat", type:"lower", level:"Beginner", dur:30, cals:7, muscles:["Đùi","Mông"], vid:"https://www.youtube-nocookie.com/embed/2C-uNgKwPLE", tips:["Bước đủ dài","Thân trên thẳng"]},
+    { id:"lunges", name:"Lunge", type:"lower", level:"Beginner", dur:30, cals:7, muscles:["Đùi","Mông","Thăng bằng"], vid:"https://www.youtube-nocookie.com/embed/QOVaHwm-Q6U", tips:["Gối trước 90°","Siết mông khi đứng lên"]},
+    { id:"rev_lunge", name:"Reverse Lunge", type:"lower", level:"Beginner", dur:30, cals:7, muscles:["Đùi","Mông"], vid:"https://www.youtube.com/watch?v=C_P3Q-PssvY", tips:["Bước lùi có kiểm soát","Giữ trục gối"]},
+    { id:"calf_raise", name:"Nhón gót (Calf Raise)", type:"lower", level:"All", dur:30, cals:5, muscles:["Bắp chân"], vid:"https://www.youtube.com/watch?v=k8ipHzKeAkQ", tips:["Lên xuống đủ biên độ","Dừng 1s trên đỉnh"]},
+    { id:"wall_sit", name:"Wall Sit", type:"lower", level:"All", dur:40, cals:5, muscles:["Đùi trước","Core"], vid:"https://www.youtube-nocookie.com/embed/y-wV4Venusw", tips:["Đùi song song sàn","Lưng áp tường"]},
+
+    // Posterior (mông/gân kheo/lưng sau)
+    { id:"glute_bridge", name:"Glute Bridge", type:"posterior", level:"Beginner", dur:35, cals:6, muscles:["Mông","Gân kheo","Core"], vid:"https://www.youtube-nocookie.com/embed/wPM8icPu6H8", tips:["Đẩy gót","Đỉnh động tác siết mông","Không võng lưng"]},
+    { id:"single_glute_bridge", name:"Single‑Leg Glute Bridge", type:"posterior", level:"Intermediate", dur:30, cals:7, muscles:["Mông","Gân kheo","Core"], vid:"https://www.youtube-nocookie.com/embed/sVfp4LN9niA", tips:["Giữ hông cân","Đẩy mạnh qua gót"]},
+    { id:"hip_thrust_couch", name:"Hip Thrust tựa ghế", type:"posterior", level:"Intermediate", dur:30, cals:7, muscles:["Mông"], vid:"https://www.youtube-nocookie.com/embed/LM8XHLYJoYs", tips:["Cằm thu","Siết mông trên đỉnh"]},
+    { id:"good_morning", name:"Good Morning không tạ", type:"posterior", level:"All", dur:30, cals:5, muscles:["Gân kheo","Lưng dưới"], vid:"https://www.youtube.com/watch?v=Kdeq15AvUVU", tips:["Bản lề hông","Lưng trung lập"]},
+    { id:"superman", name:"Superman Hold", type:"posterior", level:"All", dur:25, cals:5, muscles:["Lưng dưới","Mông"], vid:"https://www.youtube-nocookie.com/embed/z6PJMT2y8GQ", tips:["Nâng tay chân cùng lúc","Giữ 1–2s"]},
+    { id:"bird_dog", name:"Bird Dog", type:"posterior", level:"All", dur:30, cals:5, muscles:["Lưng","Core"], vid:"https://www.youtube.com/watch?v=QQot16miua8", tips:["Duỗi chéo tay‑chân","Hông giữ ngang"]},
+
+    // Core
+    { id:"plank", name:"Plank", type:"core", level:"All", dur:40, cals:6, muscles:["Core","Vai"], vid:"https://www.youtube-nocookie.com/embed/pSHjTRCQxIw", tips:["Khuỷu dưới vai","Cột sống trung lập","Thở đều"]},
+    { id:"side_plank", name:"Side Plank", type:"core", level:"All", dur:30, cals:6, muscles:["Core bên","Vai"], vid:"https://www.youtube.com/watch?v=XeN4pEZZJNI", tips:["Hông thẳng trục","Không sập vai"]},
+    { id:"hip_dips", name:"Side Plank Hip Dips", type:"core", level:"Intermediate", dur:25, cals:7, muscles:["Core bên","Vai"], vid:"https://www.youtube.com/watch?v=ibyUMvywMTc", tips:["Hạ nâng hông thẳng trục","Mắt nhìn trước"]},
+    { id:"deadbug", name:"Dead Bug", type:"core", level:"Beginner", dur:30, cals:5, muscles:["Core sâu"], vid:"https://www.youtube.com/watch?v=g_BYB0R-4Ws", tips:["Lưng áp sàn","Thở theo nhịp"]},
+    { id:"hollow_hold", name:"Hollow Hold", type:"core", level:"Intermediate", dur:25, cals:6, muscles:["Core"], vid:"https://www.youtube.com/watch?v=hf00_b2sRdc", tips:["Sườn ép xuống","Giữ căng đều"]},
+    { id:"bicycle", name:"Bicycle Crunch", type:"core", level:"All", dur:30, cals:7, muscles:["Bụng chéo","Core"], vid:"https://www.youtube-nocookie.com/embed/Iwyvozckjak", tips:["Vặn thân, không kéo cổ","Chậm‑kiểm soát"]},
+    { id:"russian_twist", name:"Russian Twist", type:"core", level:"All", dur:30, cals:6, muscles:["Bụng chéo"], vid:"https://www.youtube-nocookie.com/embed/wkD8rjkodUI", tips:["Ngả lưng 45°","Vặn từ core"]},
+    { id:"leg_raise", name:"Leg Raise", type:"core", level:"Intermediate", dur:25, cals:6, muscles:["Bụng dưới"], vid:"https://www.youtube-nocookie.com/embed/JB2oyawG9KI", tips:["Lưng không nhấc khỏi sàn","Điều khiển biên độ"]},
+    { id:"mountain", name:"Mountain Climber", type:"core", level:"All", dur:30, cals:8, muscles:["Core","Cardio"], vid:"https://www.youtube-nocookie.com/embed/cnyTQDSE884", tips:["Kéo gối nhanh có kiểm soát","Hông không nâng cao"]},
+
+    // Mobility / Warmup / Cooldown
+    { id:"cat_cow", name:"Cat‑Cow", type:"mobility", level:"All", dur:30, cals:3, muscles:["Cột sống","Mở ngực"], vid:"https://www.youtube.com/watch?v=y39PrKY_4JM", tips:["Hít mở ngực, thở cuộn lưng"]},
+    { id:"thoracic_rot", name:"Xoay lưng ngực", type:"mobility", level:"All", dur:30, cals:3, muscles:["Lưng trên"], vid:"https://www.youtube.com/watch?v=PWmNVcs8rJY", tips:["Xoay theo hơi thở","Chậm, có kiểm soát"]},
+    { id:"hip_flex_stretch", name:"Kéo giãn gập hông", type:"mobility", level:"All", dur:30, cals:3, muscles:["Gập hông"], vid:"https://www.youtube.com/watch?v=fsZebJN-gqk", tips:["Hông thu","Không ưỡn lưng"]},
+    { id:"hamstring_stretch", name:"Kéo giãn gân kheo", type:"mobility", level:"All", dur:30, cals:3, muscles:["Gân kheo"], vid:"https://www.youtube.com/watch?v=LVY692zJK0A", tips:["Lưng thẳng","Giữ 20–30s"]},
+    { id:"child_pose", name:"Child's Pose", type:"cooldown", level:"All", dur:40, cals:3, muscles:["Lưng","Hông"], vid:"https://www.youtube.com/watch?v=eqVMAPM00DM", tips:["Thả lỏng vai","Thở dài, chậm"]},
+    { id:"box_breath", name:"Thở Box 4‑4‑4‑4", type:"cooldown", level:"All", dur:60, cals:2, muscles:["Hô hấp"], vid:"https://www.youtube-nocookie.com/embed/MIr3RsUWrdo", tips:["4s hít‑giữ‑thở‑giữ","Vai thả lỏng"]},
+    // ===== Beauty (Face/Body aesthetics) =====
+    { id:"face_lymph", name:"Dẫn lưu bạch huyết mặt", type:"beauty", level:"All", dur:120, cals:3, muscles:["Mặt","Cổ"], vid:"https://www.youtube.com/watch?v=cRgJEkUeE4Y", tips:["Vuốt hướng về hạch dưới tai","Áp lực rất nhẹ – không để lại vết đỏ"], goal:"Giảm sưng, nét mặt gọn và sáng."},
+    { id:"face_jawline", name:"Face Yoga – Đường hàm V-line", type:"beauty", level:"All", dur:60, cals:3, muscles:["Hàm","Cằm"], vid:"https://www.youtube.com/watch?v=xJ-3Vufzzoc", tips:["Cằm hạ, lưỡi áp vòm miệng","Không nhăn trán"], goal:"Săn cơ cằm – hàm, giảm nọng."},
+    { id:"face_cheek", name:"Face Yoga – Nâng gò má", type:"beauty", level:"All", dur:60, cals:3, muscles:["Gò má"], vid:"https://www.youtube.com/watch?v=X_VkeCovRto", tips:["Mím môi nhẹ, kéo khoé lên","Giữ 3–5s mỗi nhịp"], goal:"Tạo nét gò má tự nhiên."},
+    { id:"face_brow", name:"Face Yoga – Nâng chân mày/bọng mắt", type:"beauty", level:"All", dur:60, cals:3, muscles:["Vùng mắt"], vid:"https://www.youtube.com/watch?v=hSiO9dMAz5U", tips:["Không nheo mắt","Thở đều, lực rất nhẹ"], goal:"Giảm mỏi mắt, mở ánh nhìn."},
+    { id:"tongue_posture", name:"Tongue posture (đặt lưỡi đúng)", type:"beauty", level:"All", dur:60, cals:2, muscles:["Lưỡi","Hàm"], vid:"https://www.youtube.com/watch?v=3Z_Fp9lGrGY", tips:["Lưỡi đặt toàn bộ lên vòm miệng, răng chạm rất nhẹ","Không siết mạnh, không gây đau"], goal:"Cải thiện tư thế hàm – thở mũi."},
+    { id:"scalp_massage", name:"Massage da đầu", type:"beauty", level:"All", dur:120, cals:3, muscles:["Da đầu"], vid:"https://www.youtube.com/watch?v=gy_0ART7Tc0", tips:["Ấn tròn nhỏ, di chuyển khắp đầu","Không cào làm xước da"], goal:"Tăng tuần hoàn, hỗ trợ tóc khoẻ."},
+    { id:"neck_decollete", name:"Massage cổ – ngực trên", type:"beauty", level:"All", dur:90, cals:3, muscles:["Cổ","Vai trước"], vid:"https://www.youtube.com/watch?v=PYDm8IWIXzs", tips:["Vuốt hướng về hạch bạch huyết","Không ấn vào khí quản"], goal:"Cổ thon, mở ngực – vai."},
+    { id:"vacuum_soft", name:"Stomach Vacuum (dịu) – TVA", type:"beauty", level:"Intermediate", dur:20, cals:3, muscles:["Bụng sâu TVA"], vid:"https://www.youtube.com/watch?v=N9msEniBkbU", tips:["Thực hiện khi bụng rỗng, không chóng mặt","Kéo rốn về cột sống, giữ 5–10s"], goal:"Siết vòng eo (thần kinh – cơ) an toàn."},
+    { id:"rib_down_breath", name:"Thở 'rút sườn' (rib down)", type:"beauty", level:"All", dur:40, cals:2, muscles:["Cơ liên sườn","TVA"], vid:"https://www.youtube.com/watch?v=ERfHfl_6bGY", tips:["Thở ra dài, cảm giác xương sườn hạ xuống","Không gồng cổ"], goal:"Gọn eo, ổn định lưng."},
+    { id:"apt_reset", name:"Reset nghiêng chậu trước (APT)", type:"beauty", level:"All", dur:60, cals:3, muscles:["Hông","Lưng dưới"], vid:"https://www.youtube.com/watch?v=2NZMaI-HeNU", tips:["Xoay chậu về trung lập, không ưỡn lưng","Kết hợp siết mông nhẹ"], goal:"Đứng đẹp, bụng phẳng thị giác."},
+    { id:"scapula_set", name:"Thiết lập xương bả vai (scapula set)", type:"beauty", level:"All", dur:60, cals:3, muscles:["Lưng trên","Vai"], vid:"https://www.youtube.com/watch?v=_94If_xw7Lg", tips:["Kéo vai xuống – ra sau nhẹ","Ngực mở, cổ dài"], goal:"Dáng vai‑cổ thanh thoát."},
+    { id:"calf_slim_stretch", name:"Giãn bắp chân 'slim calf'", type:"beauty", level:"All", dur:60, cals:3, muscles:["Bắp chân"], vid:"ytsearch:calf stretch slim legs home", tips:["Gót chạm sàn, giữ 20–30s","Không bật nhịp"], goal:"Nhẹ chân, thon gọn thị giác."},
+    { id:"ankle_mob", name:"Mobility cổ chân (đi dáng đẹp)", type:"beauty", level:"All", dur:60, cals:3, muscles:["Cổ chân"], vid:"https://www.youtube.com/watch?v=ElrpduJn92Y", tips:["Đẩy gối chạm tường không nhấc gót","Giữ trục bàn chân"], goal:"Bước đi mượt, giảm vẹo gối."},
+    { id:"neck_long", name:"Kéo dài cổ – chống nọng", type:"beauty", level:"All", dur:60, cals:3, muscles:["Cổ trước","Cằm"], vid:"https://www.youtube.com/watch?v=7rnlAVhAK-8", tips:["Rút cằm nhẹ về sau","Không ngửa cổ quá mức"], goal:"Cổ dài, giảm nọng cằm."},
+    { id:"pose_3points", name:"Tư thế chụp hình 3 điểm", type:"beauty", level:"All", dur:60, cals:2, muscles:["Tư thế tổng thể"], vid:"https://www.youtube.com/watch?v=wgzP1mQ8eGI", tips:["Mở ngực – hạ vai – trục thẳng","Hạ cằm nhẹ, xoay người 30–45°"], goal:"Đứng – chụp ảnh đẹp, thanh thoát."}
+    ];
+
+  // ====== Plan Templates (expanded) ======
+  const PLAN_TEMPLATES = {
+    
+  alignment30: {
+    id: "alignment30",
+    name: "Bộ chỉnh trục 15’ (30 ngày)",
+    desc: "Mềm trước – mạnh sau; giãn nhóm co rút → kích hoạt nhóm yếu; 15’ cố định mỗi ngày.",
+    days: Array.from({length:30}, ()=>["neck_rot","shoulder_ccw","hip_circles","wall_angels","doorway_chest","cat_cow_2m","hip_flex_stretch","plank_knees","deadbug_1m","wall_sit_1m"]),
+  },
+beginner7: {
+      id: "beginner7",
+      name: "Full Body 7 ngày (Beginner)",
+      desc: "15–20 phút/ngày, không dụng cụ",
+      days: [
+        ["jumping_jacks","squats","incline_pushups","plank"],
+        ["glute_bridge","lunges","mountain"],
+        ["squats","knee_pushups","side_plank"],
+        [],
+        ["rope_sim","sumo_squat","shoulder_taps","deadbug"],
+        ["split_squat","calf_raise","pushups"],
+        ["burpee","plank","glute_bridge"],
+      ],
+    },
+    fatburn14: {
+      id: "fatburn14",
+      name: "Giảm mỡ 14 ngày (Cardio + Core)",
+      desc: "Nhịp vừa – nhanh 18–25 phút",
+      days: [
+        ["jumping_jacks","mountain","plank"],
+        ["squats","burpee","glute_bridge"],
+        ["lunges","pushups","side_plank"],
+        [],
+        ["high_knees","mountain","hip_dips"],
+        ["sumo_squat","skaters","plank"],
+        ["rev_lunge","glute_bridge","rope_sim"],
+        [],
+        ["shadow_box","knee_pushups","plank"],
+        ["split_squat","mountain","russian_twist"],
+        ["lunges","burpee","leg_raise"],
+        [],
+        ["glute_bridge","squats","mountain"],
+        ["pushups","plank","jumping_jacks"],
+      ],
+    },
+    glute_core12: {
+      id: "glute_core12",
+      name: "Mông + Core 12 ngày",
+      desc: "Tập trung mông, gân kheo và core ổn định",
+      days: [
+        ["glute_bridge","squats","deadbug"],
+        ["single_glute_bridge","sumo_squat","plank"],
+        ["hip_thrust_couch","split_squat","side_plank"],
+        [],
+        ["good_morning","rev_lunge","hollow_hold"],
+        ["bird_dog","wall_sit","russian_twist"],
+        ["glute_bridge","calf_raise","leg_raise"],
+        [],
+        ["single_glute_bridge","sumo_squat","deadbug"],
+        ["hip_thrust_couch","split_squat","plank"],
+        ["good_morning","rev_lunge","side_plank"],
+        ["child_pose","box_breath"]
+      ],
+    },
+    mobility7: {
+      id: "mobility7",
+      name: "Mobility Reset 7 ngày",
+      desc: "Giãn – mở – thở (10–15 phút/ngày)",
+      days: [
+        ["cat_cow","thoracic_rot","hip_flex_stretch","hamstring_stretch"],
+        ["child_pose","box_breath","cat_cow"],
+        ["thoracic_rot","hip_flex_stretch","hamstring_stretch"],
+        [],
+        ["cat_cow","good_morning","child_pose"],
+        ["thoracic_rot","hamstring_stretch","box_breath"],
+        ["hip_flex_stretch","child_pose","box_breath"],
+      ],
+    },
+    strength21: {
+      id: "strength21",
+      name: "Nền sức mạnh 21 ngày (No‑equipment)",
+      desc: "Tiến độ tăng dần 15–25 phút",
+      days: [
+        ["incline_pushups","squats","deadbug"],
+        ["glute_bridge","shoulder_taps","wall_sit"],
+        ["knee_pushups","split_squat","plank"],
+        [],
+        ["pushups","sumo_squat","bird_dog"],
+        ["pike_pushups","good_morning","side_plank"],
+        ["tricep_dips","rev_lunge","leg_raise"],
+        [],
+        ["pushups","squats","hollow_hold"],
+        ["shoulder_taps","split_squat","superman"],
+        ["incline_pushups","sumo_squat","russian_twist"],
+        [],
+        ["pike_pushups","wall_sit","deadbug"],
+        ["tricep_dips","good_morning","plank"],
+        ["pushups","rev_lunge","side_plank"],
+        [],
+        ["pike_pushups","squats","leg_raise"],
+        ["shoulder_taps","split_squat","superman"],
+        ["incline_pushups","sumo_squat","hollow_hold"],
+        ["child_pose","box_breath"],
+        ["burpee","plank","glute_bridge"],
+      ],
+    }
+  
+    ,
+    beauty10: {
+      id: "beauty10",
+      name: "Làm đẹp 10’ mỗi ngày (14 ngày)",
+      desc: "Face yoga + posture + thở — 10–12 phút, an toàn tại nhà",
+      days: [
+        ["face_lymph","face_jawline","neck_long","rib_down_breath"],
+        ["face_cheek","face_brow","doorway_chest","cat_cow"],
+        ["tongue_posture","scapula_set","ankle_mob","box_breath"],
+        [],
+        ["face_lymph","neck_decollete","rib_down_breath","child_pose"],
+        ["face_jawline","vacuum_soft","apt_reset","cat_cow"],
+        ["face_cheek","scalp_massage","pose_3points","box_breath"],
+        [],
+        ["face_brow","neck_long","doorway_chest","child_pose"],
+        ["tongue_posture","scapula_set","ankle_mob","hamstring_stretch"],
+        ["face_lymph","vacuum_soft","rib_down_breath","box_breath"],
+        [],
+        ["face_jawline","neck_decollete","cat_cow","child_pose"],
+        ["face_cheek","pose_3points","doorway_chest","box_breath"]
+      ],
+    },
+    glow7: {
+      id: "glow7",
+      name: "Glow 7 ngày (Face + Posture)",
+      desc: "5–8 phút/ngày cho nét mặt sáng và dáng cổ‑vai sạch",
+      days: [
+        ["face_lymph","neck_long","scapula_set"],
+        ["face_jawline","doorway_chest","rib_down_breath"],
+        ["face_cheek","cat_cow","pose_3points"],
+        ["face_brow","ankle_mob","box_breath"],
+        ["tongue_posture","apt_reset","child_pose"],
+        ["face_lymph","scalp_massage","doorway_chest"],
+        ["face_jawline","rib_down_breath","neck_decollete"]
+      ],
+    }
+    };
+
+  const TYPES = ["all","cardio","upper","lower","posterior","core","full","mobility","cooldown","beauty"];
+  const LEVELS = ["All","Beginner","Intermediate"];
+
+  const fmt = (s)=> `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  const today = ()=> new Date().toISOString().slice(0,10);
+  const dateAdd = (d, n)=> { const x = new Date(d); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+  function beep(ms=120, freq=880){ try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const osc = ctx.createOscillator(); const g=ctx.createGain(); osc.type="sine"; osc.frequency.value=freq; osc.connect(g); g.connect(ctx.destination); g.gain.value=0.05; osc.start(); setTimeout(()=>{osc.stop(); ctx.close();}, ms);}catch{} }
+
+  
+  // ====== Settings (Cài đặt) ======
+  function Settings({ settings, setSettings, logs, plan, setLogs }){
+    const toggle = (k)=> setSettings({ ...settings, [k]: !settings[k] });
+    const clearLogs = ()=> { if(confirm("Xoá toàn bộ nhật ký luyện tập?")){ setLogs([]); try{localStorage.removeItem(LS.LOGS);}catch(e){} } };
+    const clearAll  = ()=> {
+      if(confirm("Reset toàn bộ dữ liệu (kế hoạch, cấu hình, nhật ký)?")){
+        try{ Object.values(LS).forEach(k=> localStorage.removeItem(k)); }catch(e){}
+        location.reload();
+      }
+    };
+    return (
+      <section className="max-w-3xl mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-semibold">Cài đặt</h1>
+        <label className="flex items-center gap-3">
+          <input type="checkbox" checked={!!settings.dark} onChange={()=>toggle('dark')} />
+          <span>Dark mode</span>
+        </label>
+        <label className="flex items-center gap-3">
+          <input type="checkbox" checked={!!settings.sound} onChange={()=>toggle('sound')} />
+          <span>Bật âm báo (beep)</span>
+        </label>
+        <div className="border-t pt-4 space-y-3">
+          <button className="px-4 py-2 rounded bg-red-600 text-white" onClick={clearLogs}>Xoá lịch sử luyện tập</button>
+          <button className="px-4 py-2 rounded bg-slate-800 text-white" onClick={clearAll}>Reset toàn bộ ứng dụng</button>
+        </div>
+        <div className="text-sm opacity-70">
+          <div>Nhật ký hiện có: {logs?.length || 0}</div>
+          <div>Kế hoạch hiện tại: {plan ? "Đã thiết lập" : "Chưa có"}</div>
+        </div>
+      
+          
+    
+      </section>
+    );
+  }
+
+  // ---- Safer YouTube embed (no-cookie) + graceful fallback
+  function ytEmbed(url){
+    try{
+      if(!url) return null;
+      let id = "";
+      // handle https://www.youtube-nocookie.com/embed/XXXX or watch?v=
+      const m1 = url.match(/embed\/([a-zA-Z0-9_-]+)/);
+      const m2 = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+      id = (m1 && m1[1]) || (m2 && m2[1]) || "";
+      if(!id) return url;
+      return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
+    }catch{ return url; }
+  }
+  const VideoFrame = ({url,title="Video"}) => {
+    const safe = ytEmbed(url);
+    return (
+      <div className="aspect-video rounded-xl overflow-hidden mt-3 border bg-black/20 relative">
+        <iframe className="w-full h-full" src={safe} title={title}
+          loading="lazy" referrerPolicy="strict-origin-when-cross-origin"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen />
+        <a href={url} target="_blank" rel="noopener"
+           className="absolute inset-0 flex items-end justify-end p-2 text-xs text-white/80 hover:text-white bg-gradient-to-t from-black/20 to-transparent">
+           Mở trên YouTube ↗
+        </a>
+      </div>
+    );
+  };
+  // Extract YouTube video id from a URL
+  function ytId(url){
+    try{
+      if(!url) return "";
+      const m1 = url.match(/embed\/([a-zA-Z0-9_-]{6,})/);
+      const m2 = url.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
+      return (m1 && m1[1]) || (m2 && m2[1]) || "";
+    }catch{ return ""; }
+  }
+
+  // Lite YouTube: no iframe until user clicks → fewer requests, no ads scripts before play.
+  const LiteYT = ({url, title="Video"}) => {
+    const [play, setPlay] = React.useState(false);
+    const id = ytId(url);
+    const poster = id ? `https://i.ytimg.com/vi/${id}/0.jpg` : "";
+    if(play){
+      const safe = ytEmbed(url) + (ytEmbed(url).includes("?") ? "&" : "?") + "autoplay=1&rel=0&modestbranding=1&playsinline=1";
+      return (
+        <div className="aspect-video rounded-xl overflow-hidden mt-3 border bg-black/20">
+          <iframe onError={(e)=>{e.target.replaceWith(Object.assign(document.createElement('div'),{className:'p-4 text-sm text-slate-500',innerText:'Video lỗi hoặc bị chặn. Nhấn nút Đổi video để thay link khác.'}))}} className="w-full h-full" src={safe} title={title}
+            loading="lazy" referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen />
+        </div>
+      );
+    }
+    return (
+      <button className="aspect-video w-full rounded-xl overflow-hidden mt-3 border bg-black/40 relative group"
+              onClick={()=> setPlay(true)} aria-label={"Play " + title}>
+        {poster && <img src={poster} alt={title} className="w-full h-full object-cover opacity-90 group-hover:opacity-100" onError={(e)=>{e.currentTarget.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23111'/%3E%3C/svg%3E";}}/>}
+        <div className="absolute inset-0 grid place-items-center">
+          <div className="w-16 h-16 rounded-full bg-white/90 group-hover:bg-white shadow flex items-center justify-center">
+            <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="9,7 20,12 9,17" fill="black"/></svg>
+          </div>
+        </div>
+        <span className="absolute right-2 bottom-2 text-xs text-white/90 bg-black/50 px-2 py-0.5 rounded">Bấm để phát</span>
+      </button>
+    );
+  };
+
+function App(){
+    const [route, setRoute] = useState("home");
+    const [profile, setProfile] = useState(()=> load(LS.PROFILE, null));
+    const [plan, setPlan] = useState(()=> load(LS.PLAN_DATA, null));
+    const [planId, setPlanId] = useState(()=> load(LS.PLAN_ID, null));
+    const [logs, setLogs] = useState(()=> load(LS.LOGS, []));
+    const [settings, setSettings] = useState(()=> load(LS.SETTINGS, { dark:false, sound:true }));
+
+    useEffect(()=>{ document.documentElement.classList.toggle('dark', !!settings.dark); save(LS.SETTINGS, settings); },[settings]);
+    useEffect(()=>{ save(LS.PROFILE, profile); },[profile]);
+    useEffect(()=>{ save(LS.PLAN_DATA, plan); save(LS.PLAN_ID, planId); },[plan, planId]);
+    useEffect(()=>{ save(LS.LOGS, logs); },[logs]);
+
+    const startPlan = (tplId)=>{
+      const tpl = PLAN_TEMPLATES[tplId];
+      if(!tpl) return;
+      setPlanId(tpl.id);
+      const start = today();
+      const days = tpl.days.map((arr, idx)=> ({ date: dateAdd(start, idx), ex: arr }));
+      setPlan({ id: tpl.id, name: tpl.name, desc: tpl.desc, schedule: days });
+    };
+
+    const completeDay = (dateStr)=>{
+      const entry = { date: dateStr, planId: plan?.id, completed: true };
+      const next = [...logs.filter(l=> l.date!==dateStr), entry];
+      setLogs(next);
+      if(settings.sound) beep(120, 740);
+      alert("Đã đánh dấu hoàn thành ✔");
+    };
+
+    return (
+      <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 pb-16 md:pb-0">
+        <Header route={route} setRoute={setRoute} />
+        {route==="home" && <Home profile={profile} plan={plan} setRoute={setRoute} />}
+        {route==="onboarding" && <Onboarding onDone={(p)=>{setProfile(p); setRoute("plan");}} />}
+        {route==="plan" && <PlanCenter plan={plan} startPlan={startPlan} setRoute={setRoute} />}
+        {route==="workout" && <WorkoutFlow plan={plan} logs={logs} onComplete={completeDay} settings={settings} />}
+        {route==="library" && <Library />}
+        {route==="progress" && <Progress logs={logs} />}
+        {route==="calendar" && <CalendarView logs={logs} plan={plan} />}
+        {route==="reminders" && <Reminders />}
+        {route==="settings" && <Settings settings={settings} setSettings={setSettings} logs={logs} plan={plan} setLogs={setLogs} />}
+        {route==="talos" && <TalosCoach profile={profile} plan={plan} logs={logs} setRoute={setRoute} />}
+        {route==="alignment" && <AlignmentGuide startPlan={startPlan} />}
+        <BottomNav route={route} setRoute={setRoute} />
+        <Footer />
+      </div>
+    );
+  }
+
+  function Header({route, setRoute}){
+    const tabs=[
+      {id:"home",label:"Trang chủ"},
+      {id:"plan",label:"Kế hoạch"},
+      {id:"workout",label:"Tập hôm nay"},
+      {id:"library",label:"Thư viện"},
+      {id:"progress",label:"Tiến độ"},
+      {id:"alignment",label:"Chỉnh trục 15’"},
+      {id:"calendar",label:"Lịch"},
+      {id:"reminders",label:"Nhắc nhở"},
+      {id:"settings",label:"Cài đặt"},
+      {id:"talos",label:"Talos"}
+    ];
+    return (
+      <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="text-xl font-bold">HomeFit<span className="text-blue-600">.web</span></div>
+          <nav className="hidden md:flex gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
+            {tabs.map(t=> (
+              <button key={t.id} onClick={()=> setRoute(t.id)} aria-current={route===t.id?"page":undefined} className={`px-3 py-1.5 rounded-xl text-sm border ${route===t.id?"bg-blue-600 text-white border-blue-600":"bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-700"}`}>{t.label}</button>
+            ))}
+          </nav>
+        </div>
+      </header>
+    );
+  }
+
+
+  function BottomNav({route, setRoute}){
+    const tabs=[
+      {id:"home", label:"Trang chủ", icon:(active)=> (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      )},
+      {id:"workout", label:"Tập", icon:(active)=> (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 12h12M4 15h16M8 9h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      )},
+      {id:"plan", label:"Kế hoạch", icon:(active)=> (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      )},
+      {id:"library", label:"Thư viện", icon:(active)=> (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 5h12a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5Z" stroke="currentColor" stroke-width="1.7"/><path d="M8 5V3m6 2V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      )},
+    ];
+    return (
+      <nav className="bottom-nav md:hidden" role="navigation" aria-label="Thanh điều hướng di động">
+        <div className="bar max-w-6xl mx-auto">
+          {tabs.map(t => (
+            <button key={t.id} onClick={()=> setRoute(t.id)} aria-current={route===t.id?"page":undefined} className="tab text-slate-700 dark:text-slate-200">
+              {t.icon(route===t.id)}
+              <span className="sr-only sm:not-sr-only">{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+    );
+  }
+
+  function Footer(){
+    return (
+      <footer className="max-w-6xl mx-auto px-4 py-10 text-center text-slate-500 dark:text-slate-400 text-sm">
+        <div>© {new Date().getFullYear()} HomeFit.web — Bản web luyện tập tại nhà.</div>
+        <div className="mt-2">Tham khảo bác sĩ trước khi tập nếu có vấn đề sức khỏe. Lưu ý làm đẹp: Face yoga/massage chỉ dùng lực nhẹ, dừng ngay nếu chóng mặt/đau; Vacuum thực hiện khi bụng rỗng. Có thể thêm PWA & push sau.</div>
+      </footer>
+    );
+  }
+
+  
+  function Home({profile, plan, setRoute}){
+    const todayStr = new Date().toISOString().slice(0,10);
+    const todayPlan = plan?.schedule?.find(d => d.date === todayStr);
+    const exNames = (todayPlan?.ex || []).map(x => {
+      try { return exById(x)?.name || x; } catch { return x; }
+    }).join(" • ");
+    return (
+      <section className="max-w-6xl mx-auto px-4 py-8">
+        {plan && (
+          <Card>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm text-slate-500">Hôm nay</div>
+                <div className="text-lg font-semibold">{todayStr}</div>
+                <div className="text-slate-700 dark:text-slate-300 text-sm mt-1">
+                  {todayPlan ? (todayPlan.ex.length ? exNames : "Nghỉ chủ động") : "Chưa có trong lịch"}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="px-3 py-2 rounded-xl bg-emerald-600 text-white" onClick={()=> setRoute("workout")}>Tập ngay</button>
+                <button className="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700" onClick={()=> setRoute("plan")}>Xem lịch</button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card>
+            <div className="text-2xl font-bold">Tập tại nhà — đủ mạnh cho mọi mục tiêu</div>
+            <p className="text-slate-600 dark:text-slate-300 mt-1">Không dụng cụ, 15–25 phút/ngày, kế hoạch theo mục tiêu & cấp độ.</p>
+            <div className="mt-4 flex gap-2">
+              <button className="px-4 py-2 rounded-xl bg-blue-600 text-white" onClick={()=> setRoute(profile?"plan":"onboarding")}>{profile?"Chọn/đổi kế hoạch":"Bắt đầu cá nhân hóa"}</button>
+              <button className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700" onClick={()=> setRoute("workout")}>Tập ngay</button>
+            </div>
+          </Card>
+          <Card>
+            <div className="font-semibold mb-1">Tình trạng</div>
+            <ul className="text-slate-700 dark:text-slate-300 text-sm space-y-1">
+              <li>Hồ sơ: {profile? `${profile.gender==='f'?'Nữ':'Nam'} • ${profile.level}` : 'Chưa tạo'}</li>
+              <li>Kế hoạch: {plan? plan.name: 'Chưa chọn'}</li>
+              <li>Ngày hôm nay: {today()}</li>
+            </ul>
+            <div className="mt-3">
+              <button className="px-3 py-2 rounded-xl bg-emerald-600 text-white" onClick={()=> setRoute("progress")}>Xem tiến độ</button>
+            </div>
+          </Card>
+        </div>
+      
+          
+    
+      
+      </section>
+    );
+  }
+
+  function Onboarding({onDone}){
+    const [gender, setGender] = useState("f");
+    const [level, setLevel] = useState("Beginner");
+    const [goal, setGoal] = useState("Healthy");
+    return (
+      <section className="max-w-3xl mx-auto px-4 py-8">
+        <Card>
+          <div className="text-xl font-semibold mb-2">Cá nhân hóa nhanh</div>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <Field label="Giới tính">
+              <Select value={gender} onChange={setGender} options={[{v:"f",t:"Nữ"},{v:"m",t:"Nam"}]} />
+            </Field>
+            <Field label="Cấp độ">
+              <Select value={level} onChange={setLevel} options={[{v:"Beginner",t:"Mới bắt đầu"},{v:"Intermediate",t:"Trung cấp"}]} />
+            </Field>
+            <Field label="Mục tiêu">
+              <Select value={goal} onChange={setGoal} options={[{v:"Healthy",t:"Khỏe mạnh"},{v:"Fatloss",t:"Giảm mỡ"},{v:"Strength",t:"Sức mạnh"}]} />
+            </Field>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button className="px-4 py-2 rounded-xl bg-blue-600 text-white" onClick={()=> onDone({gender, level, goal})}>Lưu & tiếp tục</button>
+          </div>
+        </Card>
+      
+          
+    
+      </section>
+    );
+  }
+  function Field({label, children}){ return (<label className="text-sm space-y-1 block"><span className="text-slate-600 dark:text-slate-300">{label}</span>{children}</label>); }
+  function Select({value, onChange, options}){ return (<select value={value} onChange={e=> onChange(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">{options.map(o=> <option key={o.v} value={o.v}>{o.t}</option>)}</select>); }
+
+  function PlanCenter({plan, startPlan, setRoute}){
+    return (
+      <section className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card>
+            <div className="text-lg font-semibold">Chọn nhanh</div>
+            <div className="mt-3 grid gap-3">
+              {Object.values(PLAN_TEMPLATES).map(p=> (
+                <div key={p.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+                  <div className="font-semibold">{p.name}</div>
+                  <div className="text-slate-600 dark:text-slate-300 text-sm">{p.desc}</div>
+                  <div className="mt-2 flex gap-2">
+                    <button className="px-3 py-2 rounded-xl bg-blue-600 text-white" onClick={()=> startPlan(p.id)}>Chọn kế hoạch</button>
+                    <button className="px-3 py-2 rounded-xl border" onClick={()=> setRoute("workout")}>Vào buổi hôm nay</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <div className="text-lg font-semibold">Trình tạo kế hoạch (Beta)</div>
+            <PlanBuilder onCreate={(tpl)=> startPlan(tpl)} />
+          </Card>
+        </div>
+        {plan && (
+          <div className="mt-6">
+            <Card>
+              <div className="font-semibold mb-2">Lịch hiện tại: {plan.name}</div>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {plan.schedule.map((d)=> (
+                  <div key={d.date} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                    <div className="text-sm text-slate-500">{d.date}</div>
+                    {d.ex.length? <div className="text-slate-800 dark:text-slate-200">{d.ex.map(x=>{const e=exById(x); return e?e.name:x;}).join(" • ")}</div> : <div className="text-amber-600">Nghỉ chủ động</div>}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+      
+          
+    
+      </section>
+    );
+  }
+  function PlanBuilder({onCreate}){
+    const [days, setDays] = useState(7);
+    const [focus, setFocus] = useState("full");
+    const [level, setLevel] = useState("Beginner");
+    const generate = ()=>{
+      const pool = EXERCISES.filter(e=> (level==="Beginner"? e.level!=="Intermediate": true));
+      const start = today();
+      const schedule = Array.from({length: days}).map((_,i)=>{
+        if((i+1)%4===0) return { date: dateAdd(start,i), ex: []};
+        const pick = (t)=> (pool.find(e=> e.type===t) || EXERCISES.find(e=> e.type==="cardio"))?.id;
+        let ex = [];
+        if(focus==="full"){ ex=["cardio","lower","upper","core"].map(pick).filter(Boolean);}
+        if(focus==="cardio"){ ex=["cardio","core","lower"].map(pick).filter(Boolean);}
+        if(focus==="core"){ ex=["core","cardio","posterior"].map(pick).filter(Boolean);}
+        if(focus==="upper"){ ex=["upper","cardio","core"].map(pick).filter(Boolean);}
+        if(focus==="lower"){ ex=["lower","cardio","core"].map(pick).filter(Boolean);}
+        if(focus==="mobility"){ ex=["mobility","mobility","cooldown"].map(pick).filter(Boolean);}
+
+if(focus==="beauty"){ ex=["beauty","mobility","cooldown"].map(pick).filter(Boolean);}
+        return { date: dateAdd(start,i), ex };
+      });
+      const id = "custom"+Date.now();
+      save(LS.PLAN_ID, id); save(LS.PLAN_DATA, { id, name:`Kế hoạch tùy chỉnh (${days} ngày)`, desc:`Tập trung: ${focus}`, schedule });
+      onCreate(id);
+    };
+    return (
+      <div className="grid sm:grid-cols-3 gap-3">
+        <Field label="Số ngày"><input type="number" min={5} max={30} value={days} onChange={e=> setDays(Number(e.target.value))} className="w-full px-3 py-2 rounded-lg border"/></Field>
+        <Field label="Trọng tâm"><Select value={focus} onChange={setFocus} options={[{v:"full",t:"Toàn thân"},{v:"cardio",t:"Cardio"},{v:"core",t:"Core"},{v:"upper",t:"Thân trên"},{v:"lower",t:"Thân dưới"},{v:"mobility",t:"Mobility/Thở"},{v:"beauty",t:"Làm đẹp (Face/Body)"}]}/></Field>
+        <Field label="Cấp độ"><Select value={level} onChange={setLevel} options={[{v:"Beginner",t:"Mới bắt đầu"},{v:"Intermediate",t:"Trung cấp"}]}/></Field>
+        <div className="col-span-full mt-2"><button onClick={generate} className="px-3 py-2 rounded-xl bg-emerald-600 text-white">Tạo kế hoạch</button></div>
+      </div>
+    );
+  }
+  // ====== Alignment Guide (15' daily) ======
+  function AlignmentGuide({startPlan}){
+    const stage1 = [
+      {name:"Xoay cổ chậm", time:"1 phút", goal:"Giãn cơ cổ gáy, reset đầu thẳng trục."},
+      {name:"Xoay vai ngược chiều", time:"1 phút", goal:"Giải phóng căng cơ vai, tránh lệch vai."},
+      {name:"Xoay hông chậm", time:"1 phút", goal:"Kích hoạt khớp hông, mở trục lưng – chậu."},
+    ];
+    const stage2 = [
+      {name:"Wall Angels", time:"2 phút", goal:"Mở lưng trên, chống gù lưng."},
+      {name:"Doorway Chest Stretch", time:"2 phút", goal:"Mở ngực, kéo vai lùi lại."},
+      {name:"Cat–Cow", time:"2 phút", goal:"Linh hoạt cột sống, kéo giãn cơ lưng."},
+      {name:"Kéo giãn hông (Lunge)", time:"1 phút", goal:"Mở cơ đùi trước và hông, chống võng lưng."},
+    ];
+    const stage3 = [
+      {name:"Plank gối", time:"30s × 2", goal:"Kích hoạt cơ bụng sâu (deep core)."},
+      {name:"Dead Bug", time:"10 lần mỗi bên", goal:"Kiểm soát thân mình khi chuyển động."},
+      {name:"Wall Sit", time:"1 phút", goal:"Kích hoạt đùi – mông – core đồng bộ giữ trục."},
+    ];
+
+    const list = [
+      {title:"I. Nguyên tắc vàng", items:[
+        "Mềm trước – Mạnh sau: mở gân cơ trước rồi mới build sức mạnh chống lệch.",
+        "Giãn nhóm cơ co rút → Kích hoạt nhóm cơ yếu.",
+        "Chậm – Chính xác – Đều đặn mỗi ngày."
+      ]},
+      {title:"II. Bài tập 15 phút mỗi ngày", items:[
+        "• Khởi động nhẹ (3’): Xoay cổ chậm 1’, Xoay vai ngược chiều 1’, Xoay hông 1’.",
+        "• Kéo giãn sâu (7’): Wall Angels 2’, Doorway Chest Stretch 2’, Cat‑Cow 2’, Kéo giãn hông (lunge) 1’.",
+        "• Kích hoạt core (5’): Plank gối 30s ×2, Dead Bug ~1’, Wall Sit 1’."
+      ]},
+      {title:"III. Cách thực hiện", items:[
+        "Dùng điện thoại bấm giờ; tập trung tuyệt đối vào hơi thở và biên độ an toàn.",
+        "Đau/cứng: giảm biên độ hoặc thời gian, KHÔNG bỏ buổi.",
+        "Đúng 15 phút: không ráng thêm – không rút ngắn.",
+        "Sau 7 ngày: tự quay clip tư thế đứng/đi để so sánh."
+      ]},
+      {title:"IV. Timeline phát triển", items:[
+        "7 ngày: thân thể nhẹ hơn, vai lưng linh hoạt.",
+        "30 ngày: dáng đứng thẳng tự nhiên hơn, giảm mỏi cổ‑vai‑lưng.",
+        "90 ngày: nền trục cơ thể vững, sẵn sàng cho bài nặng."
+      ]},
+      {title:"V. Dấu hiệu thành công", items:[
+        "Đứng tự nhiên: 2 vai cân bằng, không gồng.",
+        "Đi bộ: đầu‑vai‑hông cùng một đường thẳng.",
+        "Ngồi thẳng lâu không gù; core tự siết nhẹ khi ngồi‑đi‑đứng."
+      ]},
+      {title:"VI. Cảnh báo thực tế", items:[
+        "Ngày đầu dễ nản vì chưa thấy kết quả.",
+        "Từ ngày 15: cơ thể bắt đầu “click” và tự điều chỉnh.",
+        "Bỏ dở giữa chừng: nguy cơ lệch nặng hơn khi tập nặng sau này."
+      ]},
+    ];
+    return (
+      <section className="max-w-3xl mx-auto px-4 py-8">
+        <Card>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-bold">Bộ chỉnh trục 15’ mỗi ngày</div>
+              <div className="text-slate-600 dark:text-slate-300">Tạo nền thần kinh – cơ – xương chính xác để kiểm soát cơ thể.</div>
+            </div>
+            <button onClick={()=> startPlan("alignment30")} className="px-4 py-2 rounded-xl bg-blue-600 text-white">Chọn làm kế hoạch 30 ngày</button>
+          </div>
+        </Card>
+        <div className="mt-4 space-y-4">
+          {list.map((sec,idx)=> (
+            <Card key={idx}>
+              <div className="text-lg font-semibold">{sec.title}</div>
+              <ul className="mt-2 list-disc pl-5 text-slate-700 dark:text-slate-300">
+                {sec.items.map((it,i)=> <li key={i}>{it}</li>)}
+              </ul>
+            </Card>
+          ))}
+          
+          <Card>
+            <div className="text-lg font-semibold">Bảng chi tiết (theo giai đoạn)</div>
+            <div className="mt-3">
+              <div className="font-semibold">Khởi động nhẹ (3’)</div>
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                <div className="font-semibold">Bài tập</div>
+                <div className="font-semibold">Thời gian</div>
+                <div className="font-semibold">Mục tiêu</div>
+                {stage1.map((r, i)=>(
+                  <>
+                    <div key={"s1n"+i}>{r.name}</div>
+                    <div key={"s1t"+i}>{r.time}</div>
+                    <div key={"s1g"+i}>{r.goal}</div>
+                  </>
+                ))}
+              </div>
+
+              <div className="mt-5 font-semibold">Kéo giãn sâu (7’)</div>
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                <div className="font-semibold">Bài tập</div>
+                <div className="font-semibold">Thời gian</div>
+                <div className="font-semibold">Mục tiêu</div>
+                {stage2.map((r, i)=>(
+                  <>
+                    <div key={"s2n"+i}>{r.name}</div>
+                    <div key={"s2t"+i}>{r.time}</div>
+                    <div key={"s2g"+i}>{r.goal}</div>
+                  </>
+                ))}
+              </div>
+
+              <div className="mt-5 font-semibold">Kích hoạt core (5’)</div>
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                <div className="font-semibold">Bài tập</div>
+                <div className="font-semibold">Thời gian</div>
+                <div className="font-semibold">Mục tiêu</div>
+                {stage3.map((r, i)=>(
+                  <>
+                    <div key={"s3n"+i}>{r.name}</div>
+                    <div key={"s3t"+i}>{r.time}</div>
+                    <div key={"s3g"+i}>{r.goal}</div>
+                  </>
+                ))}
+              </div>
+            </div>
+          </Card>
+    
+          <Card>
+            <div className="text-lg font-semibold">Chuỗi bài khi chạy trong app</div>
+            <div className="text-sm text-slate-600 dark:text-slate-300">
+              Xoay cổ → Xoay vai → Xoay hông → Wall Angels → Doorway Chest → Cat‑Cow 2’ → Kéo giãn gập hông → Plank gối ×2 → Dead Bug 1’ → Wall Sit 1’.
+            </div>
+            <div className="mt-3 text-xs text-slate-500">* Vào tab <b>Tập hôm nay</b> sau khi <i>Chọn làm kế hoạch 30 ngày</i> để chạy bộ đếm.</div>
+          </Card>
+        </div>
+      
+          
+    
+      </section>
+    );
+  }
+
+
+  function WorkoutFlow({plan, logs, onComplete, settings}){
+    if(!plan) return <section className="max-w-3xl mx-auto px-4 py-8"><Card>Chưa có kế hoạch. Vào mục <b>Kế hoạch</b> để chọn hoặc tạo.</Card></section>;
+    const todayIdx = plan.schedule.findIndex(d=> d.date===today());
+    const day = plan.schedule[Math.max(0, todayIdx)];
+    if(!day) return <section className="max-w-3xl mx-auto px-4 py-8"><Card>Hôm nay không có trong lịch. Chọn lại kế hoạch.</Card></section>;
+    const isRest = day.ex.length===0;
+    const done = logs.some(l=> l.date===day.date && l.completed);
+
+    return (
+      <section className="max-w-4xl mx-auto px-4 py-8">
+        <Card>
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold">Ngày {plan.schedule.indexOf(day)+1} • {plan.name}</div>
+            <div className="text-slate-500">{day.date}</div>
+          </div>
+          {isRest? (
+            <div className="mt-3">
+              <div className="text-emerald-700">Nghỉ chủ động. Đi bộ nhẹ 10–15 phút và ngủ sớm hơn 30 phút.</div>
+              {!done && <button onClick={()=> onComplete(day.date)} className="mt-3 px-3 py-2 rounded-xl bg-blue-600 text-white">Đánh dấu đã nghỉ</button>}
+              {done && <div className="mt-3 text-emerald-600">Đã đánh dấu xong ✔</div>}
+            </div>
+          ): (
+            <WorkoutPlayer ids={day.ex} onFinish={()=> onComplete(day.date)} sound={settings.sound} done={done} />
+          )}
+        </Card>
+      
+          
+    
+      </section>
+    );
+  }
+  
+  // ====== Exercise Illustration (SVG fallback when no video) ======
+  function ExerciseIllustration({ex}){
+    const id = ex?.id || "";
+    const Title = ({t}) => <div className="mb-2 text-sm text-slate-500">{t}</div>;
+    const Box = ({children}) => (
+      <div className="mt-3 rounded-xl border bg-slate-50 dark:bg-slate-800/50 p-3 flex items-center justify-center aspect-video">
+        {children}
+      </div>
+    );
+    // simple glyphs
+    const Arrow = ({x1,y1,x2,y2}) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeWidth="3" markerEnd="url(#arrow)"/>;
+    const Head = ({cx,cy}) => <circle cx={cx} cy={cy} r="26" fill="none" stroke="currentColor" strokeWidth="4"/>;
+    const Body = ({x,y}) => <rect x={x} y={y} width="40" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="4"/>;
+
+    const svgBase = (content) => (
+      <svg viewBox="0 0 200 120" className="w-full h-full text-slate-700 dark:text-slate-200">
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+          </marker>
+        </defs>
+        {content}
+      </svg>
+    );
+
+    if(id==="neck_rot"){
+      return <><Title t="Xoay cổ: trái – phải – cúi – ngửa, chậm và đều" /><Box>
+        {svgBase(<g>
+          <Head cx="100" cy="45"/><Body x="80" y="70"/>
+          <Arrow x1="140" y1="45" x2="170" y2="45"/><Arrow x1="60" y1="45" x2="30" y2="45"/>
+          <Arrow x1="100" y1="15" x2="100" y2="0"/><Arrow x1="100" y1="75" x2="100" y2="105"/>
+        </g>)}
+      </Box></>;
+    }
+    if(id==="shoulder_ccw"){
+      return <><Title t="Xoay vai: vòng rộng, ngược chiều kim đồng hồ" /><Box>
+        {svgBase(<g>
+          <Body x="80" y="50"/><circle cx="60" cy="50" r="10" fill="currentColor"/>
+          <circle cx="140" cy="50" r="10" fill="currentColor"/>
+          <path d="M60,20 A30,30 0 1,1 30,50" fill="none" stroke="currentColor" strokeWidth="3" markerEnd="url(#arrow)"/>
+          <path d="M140,20 A30,30 0 1,1 110,50" fill="none" stroke="currentColor" strokeWidth="3" markerEnd="url(#arrow)"/>
+        </g>)}
+      </Box></>;
+    }
+    if(id==="hip_circles"){
+      return <><Title t="Xoay hông: biên độ thoải mái, giữ ngực mở" /><Box>
+        {svgBase(<g>
+          <Body x="80" y="20"/><circle cx="100" cy="70" r="22" fill="none" stroke="currentColor" strokeWidth="3"/>
+          <path d="M120,70 A20,20 0 1,1 80,70" fill="none" stroke="currentColor" strokeWidth="3" markerEnd="url(#arrow)"/>
+        </g>)}
+      </Box></>;
+    }
+    if(id==="wall_angels"){
+      return <><Title t="Wall Angels: lưng–đầu–khuỷu/cổ tay áp tường" /><Box>
+        {svgBase(<g>
+          <rect x="10" y="10" width="8" height="100" fill="currentColor"/>{/* wall */}
+          <rect x="40" y="20" width="40" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="4"/>
+          <circle cx="60" cy="15" r="10" fill="none" stroke="currentColor" strokeWidth="3"/>
+          <line x1="45" y1="40" x2="25" y2="20" stroke="currentColor" strokeWidth="4"/>
+          <line x1="75" y1="40" x2="95" y2="20" stroke="currentColor" strokeWidth="4"/>
+        </g>)}
+      </Box></>;
+    }
+    if(id==="doorway_chest"){
+      return <><Title t="Doorway stretch: khuỷu 90°, bước nhẹ ra trước" /><Box>
+        {svgBase(<g>
+          <rect x="20" y="10" width="8" height="100" fill="currentColor"/>
+          <rect x="172" y="10" width="8" height="100" fill="currentColor"/>
+          <rect x="90" y="30" width="40" height="60" rx="8" fill="none" stroke="currentColor" strokeWidth="4"/>
+          <line x1="90" y1="50" x2="60" y2="35" stroke="currentColor" strokeWidth="4"/>
+          <line x1="130" y1="50" x2="160" y2="35" stroke="currentColor" strokeWidth="4"/>
+        </g>)}
+      </Box></>;
+    }
+    if(id==="plank_knees"){
+      return <><Title t="Plank gối: khuỷu dưới vai, hông ngang" /><Box>
+        {svgBase(<g>
+          <line x1="50" y1="80" x2="150" y2="80" stroke="currentColor" strokeWidth="3"/>{/* floor */}
+          <line x1="60" y1="75" x2="100" y2="55" stroke="currentColor" strokeWidth="4"/>{/* forearm */}
+          <line x1="100" y1="55" x2="140" y2="70" stroke="currentColor" strokeWidth="4"/>{/* torso */}
+          <circle cx="60" cy="75" r="6" fill="currentColor"/><circle cx="100" cy="55" r="6" fill="currentColor"/>
+          <circle cx="140" cy="70" r="6" fill="currentColor"/><circle cx="120" cy="80" r="6" fill="currentColor"/>{/* knees */}
+        </g>)}
+      </Box></>;
+    }
+    // default
+    return <Box>{svgBase(<text x="50" y="60" fontSize="12" fill="currentColor">Không có video — xem mô phỏng</text>)}</Box>;
+  }
+
+  // ====== Video Source Overrides (user-editable) ======
+  const VID_LS_KEY = "hf_vid_overrides_v1";
+  function loadVidOverrides(){
+    try{ return JSON.parse(localStorage.getItem(VID_LS_KEY)||"{}"); }catch(e){ return {}; }
+  }
+  function saveVidOverrides(map){
+    localStorage.setItem(VID_LS_KEY, JSON.stringify(map||{}));
+  }
+  
+function ytNormalize(u){
+  if(!u) return "";
+  try{
+    // support custom 'ytsearch:query' → embed search playlist
+    if(u.startsWith("ytsearch:")){
+      const q = encodeURIComponent(u.slice(9));
+      return "https://www.youtube-nocookie.com/embed?listType=search&list=" + q;
+    }
+    // accept existing embed
+    if(u.includes("embed/")) return u.replace("www.youtube.com","www.youtube-nocookie.com");
+    // watch?v=, youtu.be/, shorts/
+    let id="";
+    if(u.includes("watch?v=")){ id = new URL(u).searchParams.get("v"); }
+    else if(u.includes("/shorts/")){ id = u.split("/shorts/")[1].split(/[?&]/)[0]; }
+    else if(u.includes("youtu.be/")){ id = u.split("youtu.be/")[1].split(/[?&]/)[0]; }
+    else { id = u; }
+    return "https://www.youtube-nocookie.com/embed/" + id;
+  }catch(e){
+    return u;
+  }
+}
+  function getVidUrl(ex){
+    const o = loadVidOverrides();
+    const raw = (o && o[ex.id]) ? o[ex.id] : ex.vid;
+    return ytNormalize(raw||"");
+  }
+function WorkoutPlayer({ids, onFinish, sound}){
+    const [i, setI] = useState(0);
+    const [phase, setPhase] = useState("prep");
+    const [t, setT] = useState(10);
+    const cur = exById(ids[i]);
+    useEffect(()=>{ let int=null; int=setInterval(()=> setT(s=> Math.max(0,s-1)),1000); return ()=> clearInterval(int); },[phase]);
+    useEffect(()=>{ if(t===0){ if(sound) beep(120,880); advance(); } },[t]);
+    const advance = ()=>{
+      if(phase==="prep"){ setPhase("work"); setT(cur?.dur||30); return; }
+      if(phase==="work"){ if(i < ids.length-1){ setPhase("rest"); setT(20);} else { setPhase("done"); setT(0); onFinish(); } return; }
+      if(phase==="rest"){ setI(i+1); setPhase("prep"); setT(10); return; }
+    };
+    if(phase==="done") return <div className="mt-3 text-emerald-600 font-semibold">Hoàn thành buổi tập! ✔</div>;
+    return (
+      <div className="mt-4">
+        <div className="text-sm text-slate-500 uppercase">{phase==="prep"?"Chuẩn bị": phase==="work"?"Thực hiện":"Nghỉ"}</div>
+        <div className="text-3xl font-bold mt-1 tabular-nums">{fmt(t)}</div>
+        {cur && (
+          <div className="mt-4 grid md:grid-cols-2 gap-4">
+            <Card>
+              <div className="text-lg font-semibold">{cur.name}</div>
+              <div className="text-slate-600 dark:text-slate-300 text-sm">{cur.muscles.join(" • ")}</div>
+              {cur.vid ? <LiteYT url={getVidUrl(cur)} title={cur.name} /> : <ExerciseIllustration ex={cur} />}
+              <ul className="mt-3 list-disc pl-5 text-slate-700 dark:text-slate-300 text-sm">
+                {cur.tips.map((s,idx)=> <li key={idx}>{s}</li>)}
+              </ul>
+            </Card>
+            <Card>
+              <div className="text-sm text-slate-500 mb-1">Tiến trình buổi tập</div>
+              <div className="flex gap-2 flex-wrap">
+                {ids.map((id, idx)=> (<span key={`${id}-${idx}`} className={`px-2 py-1 rounded-lg text-sm border ${idx<i?"bg-emerald-600 text-white border-emerald-600": idx===i?"bg-blue-600 text-white border-blue-600":"border-slate-300"}`}>{(exById(id)?.name||id)}</span>
+                ))}
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button className="px-3 py-2 rounded-xl border" onClick={()=> setPhase("prep")}>Chuẩn bị</button>
+                <button className="px-3 py-2 rounded-xl bg-blue-600 text-white" onClick={()=> setPhase("work")}>Thực hiện</button>
+                <button className="px-3 py-2 rounded-xl border" onClick={()=> setPhase("rest")}>Nghỉ</button>
+                <button className="px-3 py-2 rounded-xl border" onClick={()=> { setI(Math.min(ids.length-1, i+1)); setPhase("prep"); setT(10); }}>Bài tiếp</button>
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
+    );
+  }
+  function exById(id){ return EXERCISES.find(e=> e.id===id) || null; }
+function safeExList(ids){ return (ids||[]).map(exById).filter(Boolean); }
+
+
+  // ====== Library with filters ======
+  function Library(){
+    const [q,setQ]=useState("");
+    const [type, setType] = useState("all");
+    const [level, setLevel] = useState("All");
+    const filtered = useMemo(()=> EXERCISES.filter(e=> {
+      const okQ = e.name.toLowerCase().includes(q.toLowerCase()) || e.type.includes(q);
+      const okT = type==="all" ? true : e.type===type;
+      const okL = level==="All" ? true : e.level===level || e.level==="All";
+      return okQ && okT && okL;
+    }),[q,type,level]);
+    return (
+      <section className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-3 grid md:grid-cols-3 gap-2 items-center">
+          <input value={q} onChange={e=> setQ(e.target.value)} placeholder="Tìm bài tập (ví dụ: plank, cardio)" className="w-full px-3 py-2 rounded-xl border"/>
+          <div className="flex gap-2 flex-wrap">
+            {TYPES.map(t => (
+              <span key={t} onClick={()=> setType(t)}
+                className={`chip ${type===t? "chip-active" : "chip-idle"}`}>{t==="all"?"Tất cả": t}</span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            {LEVELS.map(l => (
+              <span key={l} onClick={()=> setLevel(l)}
+                className={`chip ${level===l? "chip-active" : "chip-idle"}`}>{l}</span>
+            ))}
+          </div>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          {filtered.map((ex,i)=> (<Card key={`${ex.id}-${i}`}>
+              <div className="flex items-center justify-between">
+                <div className="text-lg font-semibold">{ex.name}</div>
+                <div className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{ex.level}</div>
+              </div>
+              <div className="text-slate-600 dark:text-slate-300 text-sm">{ex.muscles.join(" • ")}</div>
+              {ex.goal && <div className="text-slate-600 dark:text-slate-300 text-sm mt-1"><b>Mục tiêu:</b> {ex.goal}</div>}
+              {ex.vid ? <LiteYT url={getVidUrl(ex)} title={ex.name} /> : <ExerciseIllustration ex={ex} />}
+              <ul className="mt-3 list-disc pl-5 text-slate-700 dark:text-slate-300 text-sm">
+                {ex.tips.map((t,idx)=> <li key={idx}>{t}</li>)}
+              </ul>
+              <div className="mt-2 text-xs text-slate-500">Loại: <b>{ex.type}</b> • Thời lượng gợi ý: {ex.dur||30}s</div>
+            </Card>
+          ))}
+        </div>
+      
+          
+    
+      </section>
+    );
+  }
+
+  function Progress({logs}){
+    const total = logs.length;
+    const streak = useMemo(()=> calcStreak(logs),[logs]);
+    return (
+      <section className="max-w-4xl mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card>
+            <div className="text-lg font-semibold">Tổng quan</div>
+            <ul className="mt-2 text-sm text-slate-700 dark:text-slate-300 space-y-1">
+              <li>Tổng ngày hoàn thành: <b>{total}</b></li>
+              <li>Chuỗi ngày liên tiếp: <b>{streak}</b></li>
+            </ul>
+          </Card>
+          <Card>
+            <div className="text-lg font-semibold">Heatmap 30 ngày</div>
+            <Heatmap logs={logs} days={30} />
+          </Card>
+        </div>
+      
+          
+    
+      </section>
+    );
+  }
+  function calcStreak(logs){
+    const set = new Set(logs.filter(l=> l.completed).map(l=> l.date));
+    let s = 0; let d = today();
+    while(set.has(d)){ s++; d = dateAdd(d,-1);} return s;
+  }
+  function Heatmap({logs, days=30}){
+    const set = new Set(logs.filter(l=> l.completed).map(l=> l.date));
+    const arr = []; for(let i=days-1;i>=0;i--){ const d=dateAdd(today(), -i); arr.push(d);}
+    return (
+      <div className="grid grid-cols-10 gap-2 mt-2">
+        {arr.map(d=> (
+          <div key={d} className={`h-10 rounded-lg border text-xs flex items-center justify-center ${set.has(d)?"bg-emerald-500 text-white border-emerald-500":"bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"}`}>{d.slice(5)}</div>
+        ))}
+      </div>
+    );
+  }
+
+  function CalendarView({logs, plan}){
+    const set = new Set(logs.filter(l=> l.completed).map(l=> l.date));
+    const now = new Date(); const y = now.getFullYear(); const m = now.getMonth();
+    const first = new Date(y,m,1); const dow = first.getDay();
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const cells=[]; for(let i=0;i<dow;i++) cells.push(null); for(let d=1; d<=daysInMonth; d++) cells.push(`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+    return (
+      <section className="max-w-3xl mx-auto px-4 py-8">
+        <Card>
+          <div className="text-lg font-semibold mb-2">{`Tháng ${m+1}/${y}`}</div>
+          <div className="grid grid-cols-7 gap-2">
+            {["CN","T2","T3","T4","T5","T6","T7"].map(h=> <div key={h} className="text-center text-xs text-slate-500">{h}</div>)}
+            {cells.map((d,idx)=> d? (
+              <div key={idx} className={`h-14 rounded-xl border flex items-center justify-center ${set.has(d)?"bg-emerald-500 text-white border-emerald-500":"bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"}`}>{d.slice(8)}</div>
+            ) : (<div key={idx}></div>))}
+          </div>
+          {plan && <div className="mt-3 text-slate-500 text-sm">Kế hoạch: {plan.name}</div>}
+        </Card>
+      
+          
+    
+      </section>
+    );
+  }
+
+  function Reminders(){
+    const [time, setTime] = useState(()=> load(LS.REMINDER, {hh:7, mm:0}));
+    const [enabled, setEnabled] = useState(false);
+    useEffect(()=> save(LS.REMINDER, time), [time]);
+    useEffect(()=>{
+      let t=null; function tick(){ const n=new Date(); if(n.getHours()===+time.hh && n.getMinutes()===+time.mm){ if("Notification" in window && Notification.permission==="granted"){ new Notification("Đến giờ tập HomeFit","15–20 phút thôi, khởi động nào!"); if(window?.navigator?.vibrate) navigator.vibrate(200); } } t=setTimeout(tick, 30000);} if(enabled) tick(); return ()=> t&&clearTimeout(t);
+    },[enabled, time]);
+    const request= async()=>{ if(!("Notification" in window)) return alert("Trình duyệt không hỗ trợ thông báo."); const p= await Notification.requestPermission(); if(p!=="granted") alert("Bạn có thể bật quyền thông báo để nhận nhắc nhở."); else setEnabled(true); };
+    return (
+      <section className="max-w-md mx-auto px-4 py-8">
+        <Card>
+          <div className="text-lg font-semibold">Nhắc nhở hằng ngày</div>
+          <div className="mt-3 flex items-center gap-2">
+            <input type="number" className="w-16 border rounded-lg px-2 py-1" min={0} max={23} value={time.hh} onChange={e=> setTime({...time, hh:e.target.value})} />
+            <span>:</span>
+            <input type="number" className="w-16 border rounded-lg px-2 py-1" min={0} max={59} value={time.mm} onChange={e=> setTime({...time, mm:e.target.value})} />
+            {!enabled? <button onClick={request} className="ml-2 px-3 py-2 rounded-xl bg-blue-600 text-white">Bật nhắc</button>: <span className="text-emerald-600">Đang bật (tab mở)</span>}
+          </div>
+          <div className="text-xs text-slate-500 mt-2">* Muốn nhắc khi đóng trình duyệt cần PWA + push server (có thể thêm sau).</div>
+        </Card>
+      
+          
+    
+      </section>
+    );
+  }
+
+  // ====== Talos Coach (unchanged core, minor text tidy) ======
+  function TalosCoach({profile, plan, logs, setRoute}){
+    const [cfg, setCfg] = React.useState(()=> load(LS.TALOS_CFG, { mode: "gemini", endpoint: "", model: "gemini-1.5-flash", apiKey: "", tts: false }));
+const [sys, setSys] = React.useState(()=> load(LS.TALOS_SYS, defaultSystem()));
+    const [msgs, setMsgs] = React.useState(()=> load(LS.TALOS_MEM, []));
+    const [input, setInput] = React.useState("");
+    const [busy, setBusy] = React.useState(false);
+
+    React.useEffect(()=> save(LS.TALOS_CFG, cfg), [cfg]);
+    // Force Local on first load if running from file:// and no explicit API key
+    React.useEffect(()=>{
+      try{
+        const isFile = location.protocol === "file:";
+        if(isFile && (!cfg || (cfg.mode !== "local" && !cfg.apiKey))){
+          setCfg(prev => ({...prev, mode: "local"}));
+        }
+      }catch{}
+    }, []);
+    
+    React.useEffect(()=> save(LS.TALOS_SYS, sys), [sys]);
+    React.useEffect(()=> save(LS.TALOS_MEM, msgs), [msgs]);
+
+    function defaultSystem(){
+      return [
+        "Bạn là Talos — cố vấn chiến lược/thể lực của Aurora. Giọng điệu: tỉnh táo, thẳng, tôn trọng, thực dụng, không vòng vo.",
+        "Ưu tiên: giải pháp ngắn gọn, tác vụ cụ thể, có thể thực thi ngay; nếu cần, đề xuất phương án 80/20.",
+        "Bối cảnh là một app luyện tập tại nhà. Khi thích hợp, hãy đưa gợi ý về bài tập, nhịp thở, phục hồi, dinh dưỡng.",
+        "Luôn cân nhắc tình trạng mệt mỏi mạn tính và khả năng quá tải hệ thần kinh: khuyến nghị nhịp nhẹ–vừa, ngủ và hít thở.",
+      ].join("\n");
+    }
+
+    function buildContext(){
+      const todayStr = today();
+      const recent = [...logs].slice(-14);
+      const todayPlan = plan?.schedule?.find(d => d.date === todayStr) || null;
+      return { today: todayStr, profile, plan: plan? {id: plan.id, name: plan.name, desc: plan.desc, today: todayPlan}: null, recentLogs: recent };
+    }
+    // Local, rule-based advisor for offline use
+    function localAdvisor(userText, context){
+      const recent = context?.recentLogs || [];
+      const done = recent.filter(x=> x && x.completed).length;
+      // streak (latest consecutive days with completed==true)
+      let streak = 0;
+      for(let i = recent.length-1; i>=0; i--){
+        if(recent[i]?.completed) streak++; else break;
+      }
+      const todayPlan = context?.plan?.today;
+      // quick recommendation
+      const blocks = [];
+      if(streak <= 1){
+        blocks.push("Bắt nhịp nhẹ: 12–15 phút (4 x 3 phút) gồm: 1) khởi động & mobility; 2) thân dưới (bodyweight); 3) thân trên; 4) core + thở 4–6.");
+      } else if(done < 6){
+        blocks.push("Giữ nhịp 80/20: 15–18 phút dạng circuit 5–4–3–2–1 rep với 4 động tác chính (squat/hinge/push/pull mô phỏng).");
+      } else {
+        blocks.push("Tăng nhẹ tải: 20 phút superset (lower+upper), RPE ~7, giữ nhịp thở mũi, kết 3 phút kéo giãn.");
+      }
+      if(todayPlan){
+        blocks.push("Kế hoạch hôm nay: " + (todayPlan.title || todayPlan.name || "1 phiên"));
+      }
+      const tips = [
+        "Nếu mạch nhanh, giảm 10–20% volume, ưu tiên mũi–mũi.",
+        "Sau buổi tập: 5–7 phút thở hộp 4-4-6-2 hoặc nằm co gối, thả lỏng vai.",
+        "Uống 300–500ml nước + nhúm muối/điện giải nhẹ nếu toát mồ hôi."
+      ];
+      return [
+        "🧭 **Đọc nhanh 14 ngày**",
+        `• Số buổi hoàn tất: ${done} / ${recent.length || 14}`,
+        `• Streak hiện tại: ${streak} ngày`,
+        "",
+        "🎯 **Gợi ý hôm nay**",
+        "• " + blocks.join(" "),
+        "",
+        "📝 **Lưu ý phục hồi**",
+        tips.map(t=> "• " + t).join("\n")
+      ].join("\n");
+    }
+
+
+    async function callLLM(userText){
+      const context = buildContext();
+      const messages = [
+        { role: "system", content: sys },
+        { role: "user", content: userText + "\n\n[CONTEXT]\n" + JSON.stringify(context) }
+      ];
+      setBusy(true);
+      try{
+        let reply = "";
+        if(cfg.mode === "local"){ reply = localAdvisor(userText, buildContext()); }
+        else if(cfg.mode === "gemini"){
+          const base = cfg.endpoint && cfg.endpoint.startsWith("http") ? cfg.endpoint : `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model||"gemini-1.5-flash"}:generateContent?key=${cfg.apiKey}`;
+          const glog = messages.map(m => ({ role: m.role==="assistant" ? "model":"user", parts: [{text: m.content}]}));
+          const res = await fetch(base, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ contents: glog }) });
+          const data = await res.json();
+          if(data?.candidates?.[0]?.content?.parts){ reply = data.candidates[0].content.parts.map(p=>p.text||"").join("\n"); }
+          else { reply = JSON.stringify(data).slice(0, 2000); }
+        }
+        else if(cfg.mode === "ollama"){
+          const res = await fetch(cfg.endpoint || "http://localhost:11434/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model: cfg.model || "qwen2.5:7b", messages, stream: false })
+          });
+          const data = await res.json();
+          if(data?.message?.content){ reply = data.message.content; }
+          else if(Array.isArray(data?.choices) && data.choices[0]?.message?.content){ reply = data.choices[0].message.content; }
+          else { reply = JSON.stringify(data).slice(0, 2000); }
+        } else {
+          const url = cfg.endpoint || "https://api.openai.com/v1/chat/completions";
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(cfg.apiKey ? { "Authorization": "Bearer " + cfg.apiKey } : {}),
+            },
+            body: JSON.stringify({
+              model: cfg.model || "gpt-4o-mini",
+              messages,
+              temperature: 0.4
+            })
+          });
+          const data = await res.json();
+          reply = data?.choices?.[0]?.message?.content || JSON.stringify(data).slice(0,2000);
+        }
+        const mUser = { role: "user", content: userText, ts: Date.now() };
+        const mAsst = { role: "assistant", content: reply, ts: Date.now() };
+        const next = [...msgs, mUser, mAsst];
+        setMsgs(next);
+        if(cfg.tts) speak(reply);
+      } catch (e){
+        const fallback = localAdvisor(userText, buildContext());
+        const note = "Mạng/API không khả dụng → dùng Talos (offline).";
+        setMsgs(prev => [...prev, {role:"system", content: note, ts: Date.now()} , {role:"assistant", content: fallback, ts: Date.now()}]);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function speak(text){
+      try{
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = "vi-VN";
+        speechSynthesis.speak(utter);
+      } catch{}
+    }
+
+    function quickPrompt(type){
+      if(type==="analyze"){
+        setInput("Phân tích tiến độ 14 ngày gần nhất và chỉ định bài 15 phút phù hợp hôm nay.");
+      } else if(type==="modify"){
+        setInput("Điều chỉnh kế hoạch hiện tại để giảm tải hệ thần kinh nhưng vẫn giữ nhịp tiến bộ 80/20.");
+      } else if(type==="inj"){
+        const ctx = JSON.stringify(buildContext(), null, 0);
+        setInput(prev => (prev? prev + "\n\n" : "") + "[CONTEXT] " + ctx);
+      }
+    }
+
+    return (
+      <section className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-4">
+          <Card className="lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <div className="text-lg font-semibold">Talos — Cố vấn trong app</div>
+              <div className="flex gap-2">
+                <button className="px-3 py-1.5 rounded-lg border" onClick={()=> quickPrompt("analyze")}>Phân tích tiến độ</button>
+                <button className="px-3 py-1.5 rounded-lg border" onClick={()=> quickPrompt("modify")}>Điều chỉnh lịch</button>
+                <button className="px-3 py-1.5 rounded-lg border" onClick={()=> quickPrompt("inj")}>Chèn ngữ cảnh</button>
+              </div>
+            </div>
+            <div className="mt-3 h-[48vh] overflow-y-auto space-y-3 pr-1">
+              {msgs.length===0 && (
+                <div className="text-slate-500 text-sm">Chưa có hội thoại. Hãy nhập câu hỏi (ví dụ: "Tư vấn buổi tập 15 phút hôm nay, ưu tiên core + phục hồi, tránh quá tải").</div>
+              )}
+              {msgs.map((m,idx)=> (
+                <div key={idx} className={"p-3 rounded-xl border " + (m.role==="user" ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900" : m.role==="assistant" ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-900" : "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900")}>
+                  <div className="text-xs uppercase text-slate-500 mb-1">{m.role}</div>
+                  <div className="whitespace-pre-wrap">{m.content}</div>
+                </div>
+              ))}
+              {/* busy indicator */}
+              {busy && <div className="text-slate-500 text-sm">Đang suy nghĩ…</div>}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <textarea className="flex-1 px-3 py-2 rounded-xl border" rows="3" value={input} onChange={e=> setInput(e.target.value)} placeholder="Nhập câu hỏi cho Talos…" />
+              <div className="flex flex-col gap-2">
+                <button disabled={busy || !input.trim()} onClick={()=> { const t=input.trim(); setInput(""); callLLM(t); }} className={"px-4 py-2 rounded-xl " + (busy||!input.trim() ? "bg-slate-300 text-white" : "bg-blue-600 text-white")}>Gửi</button>
+                <button onClick={()=> setMsgs([])} className="px-4 py-2 rounded-xl border">Xóa hội thoại</button>
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="text-lg font-semibold">Cấu hình Talos</div>
+            <div className="mt-2 grid grid-cols-1 gap-2">
+              <label className="text-sm">Chế độ
+                <select value={cfg.mode} onChange={e=> setCfg({...cfg, mode: e.target.value})} className="w-full px-3 py-2 rounded-lg border mt-1">
+                  <option value="ollama">Ollama / LM Studio (local)</option>
+                  <option value="openai">OpenAI‑compatible API</option>
+                  <option value="gemini">Gemini (Google AI)</option>
+                </select>
+              </label>
+              <label className="text-sm">Endpoint
+                <input value={cfg.endpoint} onChange={e=> setCfg({...cfg, endpoint: e.target.value})} className="w-full px-3 py-2 rounded-lg border mt-1" placeholder="http://localhost:11434/api/chat hoặc https://…/v1/chat/completions" />
+              </label>
+              <label className="text-sm">Model
+                <input value={cfg.model} onChange={e=> setCfg({...cfg, model: e.target.value})} className="w-full px-3 py-2 rounded-lg border mt-1" placeholder="qwen2.5:7b, llama3.1, gpt-4o-mini…" />
+              </label>
+              {cfg.mode!=="ollama" && (
+                <label className="text-sm">API Key
+                  <input type="password" value={cfg.apiKey||""} onChange={e=> setCfg({...cfg, apiKey: e.target.value})} className="w-full px-3 py-2 rounded-lg border mt-1" placeholder="sk-…" />
+                </label>
+              )}
+              <label className="text-sm flex items-center gap-2 mt-1">
+                <input type="checkbox" checked={!!cfg.tts} onChange={e=> setCfg({...cfg, tts: e.target.checked})} />
+                Đọc to câu trả lời (TTS)
+              </label>
+              <div className="text-xs text-slate-500 mt-1">
+                * Khóa API sẽ được lưu <b>cục bộ</b> trên trình duyệt (localStorage). Đảm bảo thiết bị của bạn an toàn.
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="text-sm font-semibold mb-1">Hệ thống (System prompt)</div>
+              <textarea className="w-full px-3 py-2 rounded-lg border" rows="6" value={sys} onChange={e=> setSys(e.target.value)} />
+            </div>
+          </Card>
+        </div>
+      
+          
+    
+      </section>
+    );
+  }
+
+  function Card({children, className=""}){ return <div className={`rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 ${className}`}>{children}</div>; }
+
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<App />);
+  </script>
+
+
+
+
+
+
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+/** Mount helper - schedule after idle to reduce main thread jank */
+function mountAfterIdle(mountFn){
+  if(window.requestIdleCallback){ requestIdleCallback(mountFn, {timeout: 1200}); }
+  else setTimeout(mountFn, 50);
+}
+
+/* =============== Toast Layer =============== */
+function __mountToast(){
+  const host = document.createElement('div'); document.body.appendChild(host);
+  const root = ReactDOM.createRoot(host);
+  function ToastLayer(){
+    const [items, setItems] = useState([]);
+    useEffect(()=>{
+      window.__toast_push = (msg, type="ok")=>{
+        const id = Date.now() + Math.random();
+        setItems(list => [...list, {id, msg: String(msg), type}]);
+        setTimeout(()=> setItems(list => list.filter(i=> i.id !== id)), 2600);
+      };
+      const oldAlert = window.alert;
+      window.alert = (msg)=> (window.__toast_push ? window.__toast_push(msg, "info") : oldAlert(msg));
+    },[]);
+    return <div className="toast-wrap">{items.map(i=> <div key={i.id} className={"toast "+(i.type||"ok")}>{i.msg}</div>)}</div>;
+  }
+  root.render(<ToastLayer/>);
+}
+mountAfterIdle(__mountToast);
+
+/* =============== Video Overrides =============== */
+const LS_OVERRIDE = "hf_video_overrides_v1";
+const getOverrides = ()=> { try{ return JSON.parse(localStorage.getItem(LS_OVERRIDE)||"{}"); }catch(e){ return {}; } };
+const setOverrides = (m)=> localStorage.setItem(LS_OVERRIDE, JSON.stringify(m||{}));
+
+// Normalize common YT formats
+function normalizeYt(u){
+  if(!u) return "";
+  try{
+    const url = new URL(u); const host = url.hostname.replace(/^www\./,"");
+    if(host==="youtu.be") return "https://www.youtube.com/watch?v="+url.pathname.slice(1);
+    if(host==="youtube.com"||host==="m.youtube.com"){
+      if(url.pathname.startsWith("/watch")) return "https://www.youtube.com/watch?v="+(url.searchParams.get("v")||"");
+      if(url.pathname.startsWith("/shorts/")) return "https://www.youtube.com/watch?v="+url.pathname.split("/")[2];
+      if(url.pathname.startsWith("/embed/")) return "https://www.youtube.com/watch?v="+url.pathname.split("/")[2];
+    }
+    return u;
+  }catch(e){ return u; }
+}
+
+// Apply override to in-memory EXERCISES ASAP
+(function applyOverrides(){
+  if(!window.EXERCISES) return;
+  const m = getOverrides();
+  for(const ex of window.EXERCISES){ if(m[ex.id]) ex.vid = m[ex.id]; }
+})();
+
+// Debounce helper
+const debounce = (fn, ms=200)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+
+/* Video Manager UI */
+function __mountVideoManager(){
+  const host = document.createElement('div'); document.body.appendChild(host);
+  const root = ReactDOM.createRoot(host);
+  function VideoManager(){
+    const [open, setOpen] = useState(false);
+    const [q, setQ] = useState("");
+    const [map, setMap] = useState(()=> getOverrides());
+    const [query, setQuery] = useState("");
+    const list = (window.EXERCISES||[]).filter(ex=>{
+      if(!query) return true;
+      const k = query.toLowerCase();
+      return (ex.name||"").toLowerCase().includes(k) || (ex.id||"").includes(k);
+    });
+    useEffect(()=>{
+      const h = debounce(v=> setQuery(v), 200);
+      const el = document.getElementById("__vm_search");
+      if(!el) return;
+      const onInput = (e)=> h(e.target.value);
+      el.addEventListener("input", onInput);
+      return ()=> el.removeEventListener("input", onInput);
+    },[open]);
+    useEffect(()=>{
+      if(!open) return;
+      const mask = document.querySelector('.modal-mask');
+      const card = mask && mask.querySelector('.modal-card');
+      if(!card) return;
+      const focusables = card.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const onKeyDown = (e)=>{
+        if(e.key === 'Escape'){ e.preventDefault(); setOpen(false); }
+        if(e.key === 'Tab' && focusables.length){
+          if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+          else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+        }
+      };
+      const search = document.getElementById('__vm_search'); 
+      if(search) setTimeout(()=> search.focus(), 0);
+      document.addEventListener('keydown', onKeyDown);
+      return ()=> document.removeEventListener('keydown', onKeyDown);
+    }, [open]);
+    
+    function saveOne(id, u){
+      const m = {...getOverrides(), [id]: normalizeYt(u)};
+      setOverrides(m); setMap(m);
+      const ex = (window.EXERCISES||[]).find(x=> x.id===id); if(ex) ex.vid = m[id];
+      window.__toast_push && window.__toast_push("Đã lưu link mới cho "+id, "ok");
+    }
+    function clearOne(id){
+      const m = {...getOverrides()}; delete m[id]; setOverrides(m); setMap(m);
+      window.__toast_push && window.__toast_push("Đã xóa ghi đè cho "+id, "warn");
+    }
+    const bad = (ex)=> !ex.vid || String(ex.vid).startsWith("ytsearch:");
+    return (
+      <>
+        <div id="video-fab"><button className="btn primary" onClick={()=> setOpen(true)}>🛠 Sửa video</button></div>
+        {open && (
+          <div className="modal-mask" onClick={(e)=>{ if(e.target.classList.contains('modal-mask')) setOpen(false); }}>
+            <div className="modal-card p-4" role="dialog" aria-modal="true" aria-labelledby="vm-title">
+              <div className="flex items-center justify-between mb-3">
+                <h3 id="vm-title" className="text-lg font-semibold">Sửa video bài tập</h3>
+                <button className="btn" onClick={()=> setOpen(false)}>Đóng</button>
+              </div>
+              <div className="mb-3 flex gap-2">
+                <input id="__vm_search" className="input" placeholder="Tìm theo tên/ID…" defaultValue=""/>
+                <button className="btn" onClick={()=>{ setOverrides({}); setMap({}); window.__toast_push && window.__toast_push("Đã xoá mọi ghi đè", "warn"); }}>Xóa tất cả ghi đè</button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-3 max-h-[65vh] overflow-auto no-scrollbar">
+                {list.map(ex=> (
+                  <div key={ex.id} className={"border rounded-xl p-3 "+(bad(ex)?"border-amber-400":"border-slate-300")}>
+                    <div className="text-sm opacity-70">{ex.id}</div>
+                    <div className="font-medium mb-2">{ex.name}</div>
+                    <div className="space-y-2">
+                      <input className="input" defaultValue={map[ex.id] || ex.vid || ""} id={"vid_"+ex.id} placeholder="Dán link YouTube hợp lệ…"/>
+                      <div className="flex gap-2">
+                        <button className="btn primary" onClick={()=> saveOne(ex.id, document.getElementById("vid_"+ex.id).value.trim())}>Lưu</button>
+                        <button className="btn" onClick={()=> clearOne(ex.id)}>Xóa ghi đè</button>
+                        {bad(ex) && <span className="text-xs text-amber-600">⚠ Thiếu/không hợp lệ</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+  mountAfterIdle(()=>{
+    root.render(<VideoManager/>);
+  });
+}
+mountAfterIdle(__mountVideoManager);
+
+/* =============== Quick FAB =============== */
+function __mountQuickFAB(){
+  const host = document.createElement('div'); document.body.appendChild(host);
+  const root = ReactDOM.createRoot(host);
+  function goWorkout(){
+    if(window.__jump_to_route){ window.__jump_to_route("workout"); return; }
+    const btns = Array.from(document.querySelectorAll('header button'));
+    const tgt = btns.find(b=> (b.textContent||'').trim().toLowerCase().includes('tập hôm nay'));
+    if(tgt) tgt.click(); else window.__toast_push && window.__toast_push("Không tìm thấy tab 'Tập hôm nay'", "err");
+  }
+  function QuickFAB(){ return (<div id="quick-fab" className="md:hidden"><button className="bg-blue-600 text-white btn" onClick={goWorkout}>▶ Tập ngay</button></div>); }
+  mountAfterIdle(()=> root.render(<QuickFAB/>));
+}
+mountAfterIdle(__mountQuickFAB);
+</script>
+
+
+<!-- CLEAN UI PATCH v3: scripts -->
+<script id="clean-ui-patch-js">
+(function(){
+  const onReady = (fn)=> (document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fn):fn());
+
+  // util: simple toast
+  function toast(msg,type=''){ 
+    let wrap = document.querySelector('.toast-wrap'); 
+    if(!wrap){ wrap = document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+    const t = document.createElement('div'); t.className='toast '+(type||''); t.textContent = msg;
+    wrap.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(10px)'; }, 2300);
+    setTimeout(()=> t.remove(), 3000);
+  }
+  // override alert -> toast
+  if(!window.__alertPatched){ 
+    const _alert = window.alert; 
+    window.alert = (m)=> toast(String(m),'success'); 
+    window.__alertPatched = true;
+  }
+
+  // 1) Navbar "More"
+  function setupMoreMenu(){
+    // heuristic: pick first nav that has >=6 links
+    const navs = Array.from(document.querySelectorAll('nav'));
+    let targetNav = navs.find(n=> n.querySelectorAll('a').length >= 6) || navs[0];
+    if(!targetNav) return;
+    const links = Array.from(targetNav.querySelectorAll(':scope a'));
+    if(links.length < 6) return; // nothing to do
+
+    // Keep first 4 as primary
+    const keepN = 4;
+    const primary = links.slice(0, keepN);
+    const overflow = links.slice(keepN);
+
+    // container for overflow
+    const more = document.createElement('div');
+    more.className = 'clean-nav-more';
+    const btn = document.createElement('button');
+    btn.className = 'clean-nav-more-btn';
+    btn.setAttribute('type','button');
+    btn.textContent = 'Thêm ▾';
+    const list = document.createElement('div');
+    list.className = 'clean-nav-more-list';
+    overflow.forEach(a=>{ 
+      const clone = a.cloneNode(true); 
+      clone.addEventListener('click', ()=> more.classList.remove('open'));
+      list.appendChild(clone); 
+    });
+    more.appendChild(btn); more.appendChild(list);
+
+    // place after the last kept link
+    const lastKeep = primary.at(-1);
+    if(lastKeep && lastKeep.parentElement === targetNav){
+      lastKeep.insertAdjacentElement('afterend', more);
+    }else{
+      targetNav.appendChild(more);
+    }
+    btn.addEventListener('click', (e)=>{ 
+      e.stopPropagation(); more.classList.toggle('open'); 
+    });
+    document.addEventListener('click', ()=> more.classList.remove('open'));
+  }
+
+  // 2) Sticky CTA (route-aware best-effort)
+  function setupStickyCTA(){
+    const cta = document.createElement('div');
+    cta.id = 'sticky-cta';
+    const inner = document.createElement('div');
+    inner.id = 'sticky-cta-inner';
+    inner.innerHTML = '<strong>Bắt đầu buổi tập</strong><button id="cta-go" class="btn">Tập ngay</button>';
+    cta.appendChild(inner);
+    // insert near top (after header)
+    const header = document.querySelector('header');
+    if(header && header.parentElement){ header.insertAdjacentElement('afterend', cta); }
+    else { document.body.insertBefore(cta, document.body.firstChild); }
+
+    // visibility control: only show on pages that contain a workout/home marker
+    const showIf = ()=>{
+      const hasWorkout = document.querySelector('#workout, [data-route="workout"], .workout-page');
+      const hasHome = document.querySelector('#home, [data-route="home"], .home-page');
+      cta.style.display = (hasWorkout || hasHome) ? '' : 'none';
+    };
+    showIf();
+    const mo = new MutationObserver(showIf);
+    mo.observe(document.body, {subtree:true, childList:true});
+    window.addEventListener('hashchange', showIf);
+
+    // action
+    document.getElementById('cta-go').addEventListener('click', ()=>{
+      // try existing route switchers
+      const goBtn = document.querySelector('[data-action="start-workout"]') || document.querySelector('.start-workout');
+      if(goBtn){ goBtn.click(); toast('Bắt đầu nào!'); return; }
+      // fallback: change hash
+      location.hash = '#workout';
+      toast('Đi tới Workout');
+    });
+  }
+
+  // 3) Focus mode (progressive)
+  function setupFocusMode(){
+    // attach a floating button when a workout page is present
+    const fab = document.createElement('button');
+    fab.id = 'focus-fab';
+    fab.className = 'btn';
+    Object.assign(fab.style, {position:'fixed', right:'16px', bottom:'84px', zIndex:'var(--z-fab)'});
+    fab.textContent = 'Chế độ tập trung';
+    document.body.appendChild(fab);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'focus-shell';
+    overlay.style.display = 'none';
+    overlay.innerHTML = `
+      <div class="focus-main">
+        <div class="focus-card">
+          <div class="focus-title">Tập trung</div>
+          <div id="focus-slot">Đang chuẩn bị…</div>
+        </div>
+      </div>
+      <div class="focus-ctrl">
+        <button class="btn" id="focus-prev">◀ Trước</button>
+        <button class="btn" id="focus-next">▶ Kế tiếp</button>
+        <button class="btn" id="focus-exit">⏎ Thoát</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    function openFocus(){
+      // Try clone current exercise/video
+      const current = document.querySelector('.exercise-current, .workout-item.is-active, video, iframe');
+      const slot = overlay.querySelector('#focus-slot');
+      slot.innerHTML = '';
+      if(current){
+        const clone = current.cloneNode(true);
+        clone.style.maxWidth = '100%';
+        slot.appendChild(clone);
+      }else{
+        slot.textContent = 'Không tìm thấy bài hiện tại — tiếp tục tập trung hít thở và nhịp.';
+      }
+      overlay.style.display = 'flex';
+    }
+    function closeFocus(){ overlay.style.display = 'none'; }
+    fab.addEventListener('click', openFocus);
+    overlay.querySelector('#focus-exit').addEventListener('click', closeFocus);
+    overlay.querySelector('#focus-prev').addEventListener('click', ()=>{
+      (document.querySelector('[data-action="prev-exercise"]')||{}).click?.();
+      toast('Bài trước'); openFocus();
+    });
+    overlay.querySelector('#focus-next').addEventListener('click', ()=>{
+      (document.querySelector('[data-action="next-exercise"]')||{}).click?.();
+      toast('Bài kế tiếp'); openFocus();
+    });
+
+    // show/hide fab depending on context
+    const updateFab = ()=>{
+      const hasWorkout = document.querySelector('#workout, [data-route="workout"], .workout-page, .exercise-list');
+      fab.style.display = hasWorkout ? '' : 'none';
+    };
+    updateFab();
+    const mo = new MutationObserver(updateFab);
+    mo.observe(document.body, {subtree:true, childList:true});
+    window.addEventListener('hashchange', updateFab);
+  }
+
+  // 4) Library search & chips (best-effort)
+  function setupLibrarySearch(){
+    const libRoot = document.querySelector('#library, .library-page, [data-route="library"]');
+    if(!libRoot) return;
+    // Build controls
+    const bar = document.createElement('div');
+    bar.style.margin = '8px 0';
+    bar.innerHTML = `
+      <input id="lib-q" placeholder="Tìm tên bài/nhóm cơ…" style="width:100%;max-width:420px" />
+    `;
+    libRoot.prepend(bar);
+    const qInput = bar.querySelector('#lib-q');
+
+    // items: li or card under library
+    const candidates = libRoot.querySelectorAll('.exercise-list > * , .card, li, .exercise-item');
+    function applyFilter(){
+      const q = (qInput.value||'').toLowerCase().trim();
+      candidates.forEach(el=>{
+        const txt = el.textContent.toLowerCase();
+        el.style.display = (!q || txt.includes(q)) ? '' : 'none';
+      });
+    }
+    qInput.addEventListener('input', applyFilter);
+  }
+
+  // 5) Plan weekly accordion (if data-date exists)
+  function setupPlanWeekly(){
+    const planRoot = document.querySelector('#plan, .plan-page, [data-route="plan"]');
+    if(!planRoot) return;
+    const dayCards = Array.from(planRoot.querySelectorAll('[data-date]'));
+    if(dayCards.length < 7) return; // skip if not a long plan
+
+    // group by ISO week number
+    function isoWeek(dt){
+      const d = new Date(dt.getTime());
+      d.setHours(0,0,0,0);
+      // Thursday in current week decides the year.
+      d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+      const week1 = new Date(d.getFullYear(),0,4);
+      return 1 + Math.round(((d.getTime() - week1.getTime())/86400000 - 3 + (week1.getDay()+6)%7)/7);
+    }
+    const groups = {};
+    dayCards.forEach(el=>{
+      const ds = el.getAttribute('data-date');
+      const w = isoWeek(new Date(ds));
+      (groups[w] ||= []).push(el);
+    });
+    // clear and rebuild
+    const parent = dayCards[0].parentElement;
+    const weeks = Object.entries(groups).sort((a,b)=>+a[0]-+b[0]);
+    weeks.forEach(([w,els])=>{
+      const det = document.createElement('details');
+      det.className = 'plan-week'; det.open = true;
+      const first = els[0].getAttribute('data-date'); const last = els.at(-1).getAttribute('data-date');
+      const sum = document.createElement('summary');
+      sum.textContent = `Tuần ${w} • ${first} → ${last}`;
+      det.appendChild(sum);
+      const wrap = document.createElement('div');
+      wrap.style.display='grid'; wrap.style.gap='8px'; wrap.style.gridTemplateColumns='repeat(auto-fill,minmax(200px,1fr))';
+      els.forEach(el=> wrap.appendChild(el));
+      det.appendChild(wrap);
+      parent.appendChild(det);
+    });
+  }
+
+  onReady(()=>{
+    try{ setupMoreMenu(); }catch(e){ console.warn('MoreMenu:', e); }
+    try{ setupStickyCTA(); }catch(e){ console.warn('StickyCTA:', e); }
+    try{ setupFocusMode(); }catch(e){ console.warn('FocusMode:', e); }
+    try{ setupLibrarySearch(); }catch(e){ console.warn('LibrarySearch:', e); }
+    try{ setupPlanWeekly(); }catch(e){ console.warn('PlanWeekly:', e); }
+  });
+})();
+</script>
+
+
+<!-- PRO UPGRADES v1: Command Palette + Hotkeys + TTS/Timer + ICS scripts -->
+<script id="pro-upgrades-v1-js">
+(function(){
+  const onReady = (fn)=> (document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fn):fn());
+  // ---------- Utilities ----------
+  const qs = (sel,root=document)=> root.querySelector(sel);
+  const qsa = (sel,root=document)=> Array.from(root.querySelectorAll(sel));
+  const toast = (msg,type='')=>{
+    let wrap = qs('.toast-wrap'); if(!wrap){ wrap = document.createElement('div'); wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+    const t = document.createElement('div'); t.className='toast '+(type||''); t.textContent = msg; wrap.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(10px)'; }, 2300);
+    setTimeout(()=> t.remove(), 3000);
+  };
+  const isInputTarget = (el)=> !!el && (/INPUT|TEXTAREA/.test(el.tagName) || el.isContentEditable);
+
+  // ---------- Global audio / TTS ----------
+  const audioState = {
+    beep: +localStorage.getItem('hf_beep') ?? 1,
+    tts: +localStorage.getItem('hf_tts') ?? 1,
+    vol: Math.min(1, Math.max(0, +(localStorage.getItem('hf_vol') ?? 0.6))),
+    voiceName: localStorage.getItem('hf_voice') || ''
+  };
+  function saveAudioState(){
+    localStorage.setItem('hf_beep', audioState.beep ? 1 : 0);
+    localStorage.setItem('hf_tts', audioState.tts ? 1 : 0);
+    localStorage.setItem('hf_vol', String(audioState.vol));
+    if(audioState.voiceName) localStorage.setItem('hf_voice', audioState.voiceName);
+  }
+  // Beep: WebAudio fallback to simple oscillator
+  let _ctx; function getCtx(){ _ctx = _ctx || new (window.AudioContext||window.webkitAudioContext)(); return _ctx; }
+  function beep(freq=880, duration=120, vol=audioState.vol){
+    try{
+      const ctx = getCtx();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.value = vol*0.2;
+      o.connect(g).connect(ctx.destination);
+      o.start(); setTimeout(()=>{ o.stop(); }, duration);
+    }catch(e){/*ignore*/}
+  }
+  // TTS speak
+  function getVoice(){
+    const synth = window.speechSynthesis; if(!synth) return null;
+    const pick = ()=>{
+      const list = synth.getVoices();
+      let v = list.find(v=> v.name===audioState.voiceName) ||
+              list.find(v=> /Vietnam|vi/i.test(v.lang)) ||
+              list.find(v=> /English|en/i.test(v.lang)) || list[0];
+      if(v) audioState.voiceName = v.name;
+      return v;
+    };
+    return pick();
+  }
+  function speak(text){
+    if(!audioState.tts) return;
+    const synth = window.speechSynthesis; if(!synth) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const v = getVoice(); if(v) u.voice = v;
+    u.volume = audioState.vol; u.rate = 1; u.pitch = 1;
+    synth.cancel(); // avoid stacking
+    synth.speak(u);
+  }
+
+  // ---------- Quick Timer with TTS/Beep ----------
+  let timer = {phase:'idle', remain:0, work:40, rest:20, rounds:8, round:0, id:null};
+  function openTimer(){
+    qs('#timer-overlay').style.display='block';
+    updateTimerUI();
+  }
+  function closeTimer(){ qs('#timer-overlay').style.display='none'; }
+  function fmt(s){ s = Math.max(0,Math.round(s)); const m = Math.floor(s/60).toString().padStart(2,'0'); const ss=(s%60).toString().padStart(2,'0'); return m+':'+ss; }
+  function tick(){
+    timer.remain -= 1;
+    updateTimerUI();
+    if(timer.remain<=0){
+      // phase switch
+      if(timer.phase==='work'){
+        if(audioState.beep) { beep(660,180); beep(440,220); } 
+        speak('Nghỉ');
+        timer.phase='rest'; timer.remain=timer.rest;
+      }else if(timer.phase==='rest'){
+        if(audioState.beep) { beep(880,180); beep(1320,220); }
+        timer.round += 1;
+        if(timer.round >= timer.rounds){
+          speak('Hoàn thành bài tập. Tốt lắm');
+          clearInterval(timer.id); timer.id=null; timer.phase='idle'; updateTimerUI(); return;
+        }else{
+          speak('Bắt đầu vòng tiếp theo');
+          timer.phase='work'; timer.remain=timer.work;
+        }
+      }
+    }else{
+      if(timer.remain<=10){
+        if(audioState.tts) speak(String(timer.remain));
+        else if(audioState.beep) beep(880,60);
+      }
+    }
+  }
+  function startTimer(){
+    if(timer.id) return;
+    timer.id = setInterval(tick, 1000);
+  }
+  function pauseTimer(){
+    if(timer.id){ clearInterval(timer.id); timer.id=null; }
+  }
+  function resetTimer(){
+    pauseTimer();
+    timer.phase='idle'; timer.round=0; timer.remain=0;
+    updateTimerUI();
+  }
+  function beginWork(){
+    timer.phase='work'; timer.round=0; timer.remain=timer.work;
+    startTimer();
+    speak('Bắt đầu');
+  }
+  function updateTimerUI(){
+    const disp = qs('#timer-disp'); if(!disp) return;
+    disp.textContent = (timer.phase==='idle') ? '00:00' : fmt(timer.remain);
+    qs('#timer-phase').textContent = (timer.phase==='work'?'Làm việc':timer.phase==='rest'?'Nghỉ':'Sẵn sàng');
+    qs('#timer-round').textContent = `${timer.round}/${timer.rounds}`;
+  }
+  function setupTimerUI(){
+    const overlay = document.createElement('div'); overlay.id='timer-overlay'; overlay.innerHTML = `
+      <div class="timer-card">
+        <div class="timer-head">
+          <strong>Timer HIIT</strong>
+          <div>
+            <label style="color:#fff;margin-right:8px"><input type="checkbox" id="opt-beep" ${audioState.beep?'checked':''}/> Beep</label>
+            <label style="color:#fff;margin-right:8px"><input type="checkbox" id="opt-tts" ${audioState.tts?'checked':''}/> Giọng đọc</label>
+            <label style="color:#fff">Âm lượng <input type="range" min="0" max="1" step="0.1" id="opt-vol" value="${audioState.vol}"/></label>
+          </div>
+        </div>
+        <div class="timer-grid">
+          <div><label style="color:#fff">Work (s)</label><input id="in-work" type="number" min="5" value="${timer.work}"></div>
+          <div><label style="color:#fff">Rest (s)</label><input id="in-rest" type="number" min="5" value="${timer.rest}"></div>
+          <div><label style="color:#fff">Rounds</label><input id="in-rounds" type="number" min="1" value="${timer.rounds}"></div>
+        </div>
+        <div class="timer-disp" id="timer-disp">00:00</div>
+        <div style="color:#fff;text-align:center;margin-bottom:8px">Pha: <span id="timer-phase">Sẵn sàng</span> • Vòng: <span id="timer-round">0/${timer.rounds}</span></div>
+        <div class="timer-actions">
+          <button class="btn" id="btn-begin">Bắt đầu</button>
+          <button class="btn" id="btn-pause">Tạm dừng</button>
+          <button class="btn" id="btn-reset">Reset</button>
+          <button class="btn" id="btn-close">Đóng</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const fab = document.createElement('button'); fab.id='timer-fab'; fab.className='btn'; fab.textContent='⏱️ Timer';
+    document.body.appendChild(fab);
+    fab.addEventListener('click', openTimer);
+    qs('#btn-close').addEventListener('click', closeTimer);
+    qs('#btn-begin').addEventListener('click', ()=>{
+      timer.work = Math.max(5, +qs('#in-work').value||timer.work);
+      timer.rest = Math.max(5, +qs('#in-rest').value||timer.rest);
+      timer.rounds = Math.max(1, +qs('#in-rounds').value||timer.rounds);
+      beginWork();
+    });
+    qs('#btn-pause').addEventListener('click', pauseTimer);
+    qs('#btn-reset').addEventListener('click', resetTimer);
+    qs('#opt-beep').addEventListener('change', (e)=>{ audioState.beep = e.target.checked?1:0; saveAudioState(); toast('Beep: '+(audioState.beep?'Bật':'Tắt'));});
+    qs('#opt-tts').addEventListener('change', (e)=>{ audioState.tts = e.target.checked?1:0; saveAudioState(); toast('Giọng đọc: '+(audioState.tts?'Bật':'Tắt')); });
+    qs('#opt-vol').addEventListener('input', (e)=>{ audioState.vol = +e.target.value; saveAudioState(); });
+  }
+
+  // ---------- Keyboard Shortcuts (Workout) ----------
+  function setupHotkeys(){
+    window.addEventListener('keydown', (e)=>{
+      if(isInputTarget(e.target)) return;
+      const k = e.key.toLowerCase();
+      // Space = pause/play
+      if(k===' ' || k==='spacebar'){
+        e.preventDefault();
+        const tgl = qs('[data-action="toggle-play"], .toggle-play, .play, .pause');
+        if(tgl){ tgl.click(); toast('Tạm dừng/Phát'); return; }
+        const vid = qs('video'); if(vid){ if(vid.paused) vid.play(); else vid.pause(); toast(vid.paused?'Tạm dừng':'Phát'); return; }
+      }
+      // N / P = next/prev
+      if(k==='n'){
+        (qs('[data-action="next-exercise"], .next, .btn-next')||{}).click?.();
+        toast('Bài kế tiếp'); if(audioState.beep) beep(1040,90);
+      }
+      if(k==='p'){
+        (qs('[data-action="prev-exercise"], .prev, .btn-prev')||{}).click?.();
+        toast('Bài trước'); if(audioState.beep) beep(800,90);
+      }
+      // F = focus mode
+      if(k==='f'){
+        const fab = qs('#focus-fab') || qs('#focus .btn');
+        if(fab){ fab.click(); toast('Focus Mode'); }
+      }
+      // Arrow up/down = volume
+      if(k==='arrowup'){ audioState.vol = Math.min(1, audioState.vol+0.1); saveAudioState(); toast('Âm lượng: '+Math.round(audioState.vol*100)+'%'); }
+      if(k==='arrowdown'){ audioState.vol = Math.max(0, audioState.vol-0.1); saveAudioState(); toast('Âm lượng: '+Math.round(audioState.vol*100)+'%'); }
+      // T = open timer
+      if(k==='t'){ openTimer(); }
+      // Ctrl/Cmd+K is handled below for Command Palette
+    }, {passive:false});
+  }
+
+  // ---------- Command Palette ----------
+  function setupCommandPalette(){
+    const overlay = document.createElement('div'); overlay.className='cmdk-overlay';
+    const box = document.createElement('div'); box.className='cmdk-box';
+    box.innerHTML = `<input class="cmdk-search" id="cmdk-q" placeholder="Gõ để tìm: trang, bài tập, lệnh (ví dụ: 'plan', 'focus', 'export ics', 'timer', 'remind')"/><div class="cmdk-list" id="cmdk-list"></div>`;
+    document.body.appendChild(overlay); document.body.appendChild(box);
+
+    function open(){ overlay.style.display='block'; box.style.display='block'; const q=qs('#cmdk-q'); q.value=''; render(''); q.focus(); }
+    function close(){ overlay.style.display='none'; box.style.display='none'; }
+    overlay.addEventListener('click', close);
+    window.addEventListener('keydown', (e)=>{
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); open(); }
+      if(e.key==='Escape'){ close(); }
+    });
+
+    const actions = [];
+    // Nav targets from existing links (avoid duplicates)
+    const pushAct = (title, k, run)=> actions.push({title, k, run});
+    const routeMap = [
+      ['Trang chủ','#home'],['Tập','#workout'],['Kế hoạch','#plan'],['Thư viện','#library'],
+      ['Tiến độ','#progress'],['Chỉnh trục','#alignment'],['Lịch','#calendar'],
+      ['Nhắc nhở','#reminders'],['Cài đặt','#settings'],['Talos','#talos']
+    ];
+    routeMap.forEach(([name,hash])=> pushAct(name, '', ()=>{ (window.__homefit_goto && window.__homefit_goto(name)) || (location.hash = hash); close(); }));
+    pushAct('Bắt đầu tập','N', ()=>{ (qs('[data-action="start-workout"], .start-workout')||{}).click?.(); close(); });
+    pushAct('Bật Focus Mode','F', ()=>{ (qs('#focus-fab')||{}).click?.(); close(); });
+    pushAct('Mở Timer HIIT','T', ()=>{ openTimer(); close(); });
+    pushAct('Xuất kế hoạch .ics','E', ()=>{ exportPlanICS(); close(); });
+
+    // Render filtered
+    let idx=0;
+    function render(q){
+      const list = qs('#cmdk-list'); list.innerHTML='';
+      const norm = q.trim().toLowerCase();
+      const cand = !norm ? actions : actions.filter(a=> a.title.toLowerCase().includes(norm));
+      cand.forEach((a,i)=>{
+        const item = document.createElement('div'); item.className='cmdk-item'+(i===idx?' active':'');
+        item.innerHTML = `<span>${a.title}</span><span class="k">${a.k}</span>`;
+        item.addEventListener('click', a.run);
+        list.appendChild(item);
+      });
+    }
+    qs('#cmdk-q').addEventListener('input', (e)=>{ idx=0; render(e.target.value); });
+    qs('#cmdk-q').addEventListener('keydown', (e)=>{
+      const items = qsa('.cmdk-item', qs('#cmdk-list'));
+      if(e.key==='ArrowDown'){ idx=Math.min(items.length-1, idx+1); render(e.target.value); e.preventDefault(); }
+      if(e.key==='ArrowUp'){ idx=Math.max(0, idx-1); render(e.target.value); e.preventDefault(); }
+      if(e.key==='Enter'){ const it = items[idx]; if(it) it.click(); }
+    });
+  }
+
+  // ---------- ICS Export & Google Calendar ----------
+  function pad(n){ return (n<10?'0':'')+n; }
+  function formatICSDate(d){ // local time (floating)
+    return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+  }
+  function buildEvent({title='Workout', desc='', start, end, uid}){
+    return [
+      'BEGIN:VEVENT',
+      'UID:'+ (uid || (Date.now()+'-'+Math.random().toString(36).slice(2))),
+      'DTSTAMP:'+ formatICSDate(new Date()),
+      'DTSTART:'+ formatICSDate(start),
+      'DTEND:'+ formatICSDate(end),
+      'SUMMARY:'+ title,
+      desc ? ('DESCRIPTION:'+desc.replace(/\n/g,'\\n')) : '',
+      'END:VEVENT'
+    ].filter(Boolean).join('\\r\\n');
+  }
+  function exportPlanICS(){
+    const planRoot = qs('#plan, .plan-page, [data-route="plan"]');
+    if(!planRoot){ toast('Không thấy kế hoạch để xuất'); return; }
+    const dayEls = qsa('[data-date]', planRoot);
+    if(!dayEls.length){ toast('Kế hoạch chưa có ngày'); return; }
+    const events = [];
+    dayEls.forEach(el=>{
+      const ds = el.getAttribute('data-date'); if(!ds) return;
+      const start = new Date(ds+'T19:00:00'); // default 19:00
+      const end = new Date(ds+'T19:45:00');
+      const title = 'Workout';
+      const desc = el.textContent.trim().slice(0,180);
+      events.push(buildEvent({title,desc,start,end}));
+    });
+    const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HomeFit//Plan Export//EN'].concat(events).concat(['END:VCALENDAR']).join('\\r\\n');
+    const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='homefit_plan.ics'; a.click();
+    setTimeout(()=> URL.revokeObjectURL(url), 2000);
+    toast('Đã xuất file .ics');
+  }
+  function attachPlanExportUI(){
+    const planRoot = qs('#plan, .plan-page, [data-route="plan"]');
+    if(!planRoot) return;
+    // Top export bar
+    const bar = document.createElement('div'); bar.className='plan-export-bar';
+    const btnICS = document.createElement('button'); btnICS.className='plan-action'; btnICS.textContent='Xuất .ics (toàn bộ)';
+    btnICS.addEventListener('click', exportPlanICS);
+    bar.appendChild(btnICS);
+    planRoot.prepend(bar);
+    // Per-day Google Calendar buttons
+    qsa('[data-date]', planRoot).forEach(el=>{
+      const ds = el.getAttribute('data-date'); if(!ds) return;
+      const start = ds.replace(/-/g,'')+'T190000'; const end = ds.replace(/-/g,'')+'T194500';
+      const text = encodeURIComponent('Workout'); const details = encodeURIComponent('Kế hoạch từ HomeFit');
+      const href = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${start}/${end}&details=${details}`;
+      const add = document.createElement('a'); add.href=href; add.target='_blank'; add.rel='noopener'; add.className='plan-action'; add.textContent='GCal';
+      (el.querySelector('.header,.title')||el).appendChild(add);
+    });
+  }
+
+  onReady(()=>{
+    try{ setupTimerUI(); }catch(e){ console.warn('TimerUI', e); }
+    try{ setupHotkeys(); }catch(e){ console.warn('Hotkeys', e); }
+    try{ setupCommandPalette(); }catch(e){ console.warn('CmdK', e); }
+    try{ attachPlanExportUI(); }catch(e){ console.warn('ICS UI', e); }
+  });
+})();
+</script>
+
+
+<script id="pro-upgrades-v1-fix-nav">
+(function(){
+  const onReady = (fn)=> (document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fn):fn());
+  onReady(()=>{
+    // Monkey-patch command palette to use real nav clicks
+    const box = document.querySelector('.cmdk-box');
+    if(!box) return; // palette not present
+    // helper: find nav button by label text
+    function findNavBtn(label){
+      label = (label||'').trim().toLowerCase();
+      const navBtns = Array.from(document.querySelectorAll('nav button, .bottom-nav button'));
+      return navBtns.find(b=> (b.textContent||'').trim().toLowerCase() === label) || null;
+    }
+    function goto(label){
+      const btn = findNavBtn(label);
+      if(btn){ btn.click(); return true; }
+      return false;
+    }
+    // Replace palette actions if available
+    const list = document.getElementById('cmdk-list');
+    const input = document.getElementById('cmdk-q');
+    if(!list || !input) return;
+    // We can't easily hook the original array, but we can delegate clicks from item text
+    list.addEventListener('click', (e)=>{
+      const item = e.target.closest('.cmdk-item'); if(!item) return;
+      const title = (item.querySelector('span')||item).textContent || '';
+      // Titles are "Đi tới: <Label>"
+      const m = title.match(/Đi tới:\s*(.+)$/i);
+      if(m){
+        if(goto(m[1])){
+          // close overlay
+          const overlay = document.querySelector('.cmdk-overlay'); 
+          if(overlay){ overlay.style.display='none'; }
+          const box = document.querySelector('.cmdk-box'); 
+          if(box){ box.style.display='none'; }
+        }
+      }
+    });
+    // Also override global hash navigation function if defined by patch
+    window.__homefit_goto = goto;
+  });
+})();
+</script>
+
+</body>
+</html>
