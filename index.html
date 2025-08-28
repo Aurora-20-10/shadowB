@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>HomeFit.web — Luyện tập tại nhà (Expanded)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="color-scheme" content="light dark" />
@@ -187,6 +187,42 @@ ul.list-disc li{margin:.2rem 0}
 
 <style id="pro-upgrades-v1-css-tweak">
   .cmdk-item .k:empty{ display:none; }
+</style>
+
+
+<style id="mobile-hotfix">
+/* --- Mobile Usability Hotfix v1 --- */
+
+/* Show full header nav on small screens as a horizontal scroller */
+@media (max-width: 768px){
+  header nav.hidden{ display:flex !important; }
+  header nav{ display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:.5rem; }
+  header nav button{ flex:0 0 auto; padding:.55rem .8rem; font-size:.92rem; }
+  /* Slightly larger base font for readability */
+  body{ font-size:16px; }
+}
+
+/* Keep bottom nav clear of iOS home-indicator */
+.bottom-nav{ padding-bottom: calc(env(safe-area-inset-bottom, 0px) + .4rem); }
+@supports(padding: max(0px)){
+  .bottom-nav{ padding-bottom: max(.4rem, env(safe-area-inset-bottom)); }
+}
+
+/* Prevent bottom nav from covering content on short screens */
+@media (max-width: 768px){
+  main, section{ padding-bottom: 84px; }
+}
+
+/* Make touch targets a bit bigger */
+.bottom-nav .tab{ padding:.6rem 0; }
+
+/* Reduce heavy shadows on mobile to lower paint cost */
+@media (max-width: 768px){
+  :root{ --hf-shadow: 0 4px 12px rgba(2,6,23,.05); --hf-shadow-dark: 0 8px 16px rgba(0,0,0,.28); }
+}
+
+/* Ensure videos are tap-friendly and lazy */
+.aspect-video iframe{ pointer-events:auto; }
 </style>
 
 </head>
@@ -1556,9 +1592,7 @@ const [sys, setSys] = React.useState(()=> load(LS.TALOS_SYS, defaultSystem()));
 
   function Card({children, className=""}){ return <div className={`rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 ${className}`}>{children}</div>; }
 
-  const root = ReactDOM.createRoot(document.getElementById('root'));
-  root.render(<App />);
-  </script>
+  const __mountApp = () => {  try { const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<App />); } catch(e){ console.error(e); }};if (/Mobi|Android/i.test(navigator.userAgent) && 'requestIdleCallback' in window) {  requestIdleCallback(__mountApp);} else {  __mountApp();}</script>
 
 
 
